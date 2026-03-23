@@ -1,6 +1,6 @@
-﻿namespace Domain.Entities.Unit
+﻿namespace Domain.ValueObjects
 {
-    public class UnitStats
+    public record UnitStats
     {
         public int Power;
         public int Health;

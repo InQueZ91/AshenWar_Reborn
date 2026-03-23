@@ -1,4 +1,4 @@
-﻿namespace Domain.Entities.Unit
+﻿namespace Domain.Enums
 {
     public enum UnitState
     {

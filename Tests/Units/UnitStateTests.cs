@@ -1,5 +1,6 @@
 ﻿using Domain.Entities.Unit;
 using Domain.Entities.Unit.Events;
+using Domain.Enums;
 using Tests.TestHelpers;
 
 namespace Tests.Units;

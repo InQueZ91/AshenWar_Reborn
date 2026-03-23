@@ -1,23 +1,25 @@
 ﻿using System;
 using System.Numerics;
 using Domain.Entities.Unit.Events;
+using Domain.Enums;
 using Domain.ValueObjects;
 
 namespace Domain.Entities.Unit
 {
     public sealed class Unit : Entity
     {
-        public UnitId Id { get; private set; }
-        
         // Identifiers
-        public PlayerId Owner { get; private set; }
-        public Vector2 Coord { get; private set; }
+        public UnitId Id { get; private set; }
         public string Name { get; private set; }
         
-        // Stats
+        // References
+        public PlayerId Owner { get; private set; }
+        public Vector2 Coord { get; private set; }
+        
+        // Definitions
         public UnitStats BaseStats { get; private set; }
 
-        #region Runtime Values
+        #region Runtime values
 
         public int Power { get; private set; }
         public int Health { get; private set; }
@@ -28,7 +30,8 @@ namespace Domain.Entities.Unit
         public UnitState State { get; private set; }
 
         #endregion
-
+        
+        // Constructor
         private Unit(PlayerId owner, Vector2 coord, string name, UnitStats baseStats)
         {
             Id = UnitId.New();
@@ -46,20 +49,16 @@ namespace Domain.Entities.Unit
             Speed = baseStats.Speed;
             State = UnitState.Ready;
         }
-
-        public static Unit Create(
-            PlayerId owner,
-            Vector2 coord,
-            string name,
-            UnitStats baseStats)
+        public static Unit Create(PlayerId owner, Vector2 coord, string name, UnitStats baseStats)
         {
             var unit = new Unit(owner, coord, name, baseStats);
 
             unit.RaiseDomainEvent(new UnitCreated(unit));
             return unit;
         }
+        
+        #region States
 
-        // States
         public void Ready()
         {
             TransitionTo(UnitState.Ready, () => RaiseDomainEvent(new UnitReady(Id)));            
@@ -79,7 +78,11 @@ namespace Domain.Entities.Unit
 
             onChanged?.Invoke();
         }
+
+        #endregion
         
+        #region Actions
+
         public void GainStamina(int amount)
         {
             Stamina = Math.Min(Stamina + amount, BaseStats.Stamina);
@@ -92,31 +95,38 @@ namespace Domain.Entities.Unit
             
             RaiseDomainEvent(new UnitStaminaUpdated(Id, Stamina, BaseStats.Stamina));
         }
+        
         public void TakeDamage(int amount)
         {
+            // Validation
             if (amount <= 0) return;
             
-            var previous = Health;
-            
+            // Action
+            var previousHealth = Health;
             Health = Math.Max(Health - amount, 0);
             
+            // Raise events
             RaiseDomainEvent(new UnitDamaged(Id, Health, BaseStats.Health));
-
-            if (previous > 0 && Health == 0)
+            
+            // Transition to dead if health is zero
+            if (previousHealth > 0 && Health == 0)
             {
                 TransitionTo(UnitState.Dead, () => RaiseDomainEvent(new UnitDied(Id)));
             }
         }
-        
-        // Movement
         public void MoveTo(Vector2 newCoord)
         {
+            // Validation
             if (Coord == newCoord) return;
 
+            // Action
             var from = Coord;
             Coord = newCoord;
             
+            // Raise events
             RaiseDomainEvent(new UnitMoved(Id, from, Coord));
         }
+
+        #endregion
     }
 }
