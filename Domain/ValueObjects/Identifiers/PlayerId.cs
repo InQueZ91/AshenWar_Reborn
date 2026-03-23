@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects;
+namespace Domain.ValueObjects.Identifiers;
 
 public readonly record struct PlayerId(Guid Value)
 {
