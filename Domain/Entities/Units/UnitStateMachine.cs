@@ -1,7 +1,7 @@
 ﻿using System;
 using Domain.Enums;
 
-namespace Domain.Entities.Unit;
+namespace Domain.Entities.Units;
 
 public static class UnitStateMachine
 {

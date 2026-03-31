@@ -1,27 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
-using Domain.Entities.Unit.Events;
+using Domain.Entities.Abilities;
+using Domain.Entities.Effects.Status;
+using Domain.Entities.Units.Events;
 using Domain.Enums;
-using Domain.Interfaces;
+using Domain.Interfaces.Effect;
+using Domain.Interfaces.Modifier;
+using Domain.Interfaces.Object;
 using Domain.ValueObjects;
 using Domain.ValueObjects.Identifiers;
 
-namespace Domain.Entities.Unit;
+namespace Domain.Entities.Units;
 
-public sealed class Unit : Entity
+public sealed class Unit : Entity, IEffectTarget, IDamageable, IStatusHolder, IStatHolder<UnitStat>
 {
-    #region References
+    #region Id and References
 
-    public PlayerId Owner { get; private set; }
-    public Vector2 Coord { get; private set; }
+    // Identifiers
+    public UnitId Id { get; } = UnitId.New();
     public string Name { get; private set; }
     
-    // StatusInstances
-    // AbilityInstances
+    // References
+    public PlayerId Owner { get; private set; }
+    public Vector2 Coord { get; private set; }
 
     #endregion
-
+    
     #region Stats
 
     public UnitStats BaseStats { get; private set; }
@@ -36,58 +42,129 @@ public sealed class Unit : Entity
     public int Speed { get; private set; }
     public int Vision { get; private set; }
     
-    private readonly List<StatModifier> _statModifiers = new List<StatModifier>();
-    
     #endregion
 
     // State
     public UnitState State { get; private set; }
 
-    // Constructor
-    private Unit(PlayerId owner, Vector2 coord, string name, UnitStats baseStats)
+    public readonly List<StatusEffect> StatusEffects = new List<StatusEffect>();
+    private readonly List<Ability> _abilities = new List<Ability>();
+    
+    #region Constructor
+
+    private Unit(PlayerId owner, Vector2 coord, UnitDefinition definition)
     {
         // References
         Owner = owner;
         Coord = coord;
-        Name = name;
+        
+        // Identifiers
+        Name = definition.Name;
 
         // Stats
-        BaseStats = baseStats;
-        Power = baseStats.Power;
-        Health = baseStats.Health;
-        Stamina = baseStats.Stamina;
-        Steps = baseStats.Steps;
-        Speed = baseStats.Speed;
-        Vision = baseStats.Vision;
-    }
-    public static Unit Create(PlayerId owner, Vector2 coord, string name, UnitStats baseStats)
-    {
-        return new Unit(owner, coord, name, baseStats);
-    }
-
-    #region Modifier Methods 
-
-    // Modifiers should never be added/removed directly
-    // They should only be added/removed, and stats are recalculated dynamically
-    public void AddStatModifier(StatModifier modifier)
-    {
-        _statModifiers.Add(modifier);
+        BaseStats = definition.BaseStats;
+        Power = BaseStats.Power;
+        Health = BaseStats.Health;
+        Stamina = BaseStats.Stamina;
+        Steps = BaseStats.Steps;
+        Speed = BaseStats.Speed;
+        Vision = BaseStats.Vision;
+        
+        // Abilities
+        foreach (var abilityDef in definition.Abilities)
+        {
+            _abilities.Add(Ability.Instantiate(abilityDef, this));
+        }
     }
     
-    // This method designed to use when 
-    // An ability instance creates a modifier
-    // A status effect expires
-    // A temporary buff/debuff ends
-    public void RemoveStatModifier(Guid modifierId)
+    public static Unit Instantiate(PlayerId owner, Vector2 coord, UnitDefinition definition)
     {
-        _statModifiers.RemoveAll(m => m.Id == modifierId);
+        return new Unit(owner, coord, definition);
     }
+
+    #endregion
     
-    // This method designed to use with status effects
-    // All related modifiers should be removed
-    public void RemoveStatModifiersFromSource(IModifierSource source)
+    // Methods
+    
+    #region Effect Methods
+
+    public void AddStatus(StatusEffect statusEffect)
     {
-        _statModifiers.RemoveAll(m => m.Source == source);   
+        StatusEffects.Add(statusEffect);
+        statusEffect.OnApply(this);
+    }
+    public void RemoveStatus(Guid statusId)
+    {
+        var status = StatusEffects.Find(s => s.Id == statusId);
+
+        if (status == null) return;
+
+        StatusEffects.Remove(status);
+        status.OnExpire(this);
+    }
+    public void TickStatusEffects()
+    {
+        var expiredStatuses = StatusEffects
+            .Where(status => status.Tick(this))
+            .ToList();
+
+        foreach (var status in expiredStatuses)
+        {
+            RemoveStatus(status.Id);
+        }
+    }
+
+    #endregion
+    
+    #region StatHolder 
+    
+    public int GetStat(UnitStat stat)
+    {
+        var modifiers = StatusEffects
+            .OfType<IModifierProvider<IUnitStatModifier>>()
+            .SelectMany(s => s.GetModifiers())
+            .Where(m => m.UnitStat == stat);
+
+        var baseValue = GetBaseStat(stat);
+        
+        float flat = 0;
+        float additive = 0;
+        float multiplicative = 1;
+
+        foreach (var m in modifiers)
+        {
+            switch (m.ModifierType)
+            {
+                case ModifierType.Flat:
+                    flat += m.Modifier;
+                    break;
+                case ModifierType.Additive:
+                    additive += m.Modifier;
+                    break;
+                case ModifierType.Multiplicative:
+                    multiplicative *= m.Modifier;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        var final = (baseValue + flat) * (1 + additive) * multiplicative;
+        
+        return (int) Math.Round(final);
+    }
+    public int GetBaseStat(UnitStat stat)
+    {
+        return stat switch
+        {
+            UnitStat.Power => BaseStats.Power,
+            UnitStat.Health => BaseStats.Health,
+            UnitStat.Stamina => BaseStats.Stamina,
+            UnitStat.Steps => BaseStats.Steps,
+            UnitStat.Speed => BaseStats.Speed,
+            UnitStat.Vision => BaseStats.Vision,
+            _ => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
+        };
     }
     
     #endregion
@@ -103,7 +180,7 @@ public sealed class Unit : Entity
     }
     public void RestoreHealth(int amount)
     {
-        Health = Math.Min(Health + amount, GetMaxStat(UnitStat.Health));
+        Health = Math.Min(Health + amount, GetStat(UnitStat.Health));
 
         RaiseDomainEvent(new UnitHealthRestored());
     }
@@ -117,7 +194,7 @@ public sealed class Unit : Entity
     }
     public void RestoreStamina(int amount)
     {
-        Stamina = Math.Min(Stamina + amount, GetMaxStat(UnitStat.Stamina));
+        Stamina = Math.Min(Stamina + amount, GetStat(UnitStat.Stamina));
 
         RaiseDomainEvent(new UnitStaminaRestored());
     }
@@ -131,46 +208,10 @@ public sealed class Unit : Entity
     }
     public void RestoreSteps(int amount)
     {
-        Steps = Math.Min(Steps + amount, GetMaxStat(UnitStat.Steps));
+        Steps = Math.Min(Steps + amount, GetStat(UnitStat.Steps));
 
         RaiseDomainEvent(new UnitStepRestored());
     }
 
     #endregion
-    
-    // Stats are calculated dynamically based on modifiers
-    public int GetMaxStat(UnitStat stat)
-    {
-        var baseValue = GetBaseStat(stat);
-        var flat = 0;
-        var multiplier = 1f;
-        
-        foreach (var modifier in _statModifiers)
-        {
-            if (modifier.Stat != stat)
-                continue;
-            
-            if (modifier.Type == ModifierType.Flat)
-                flat += (int) modifier.Value;
-            
-            if (modifier.Type == ModifierType.Modifier)
-                multiplier *= modifier.Value;
-        }
-        
-        return (int) Math.Round(Math.Max(baseValue + flat, 0) * multiplier);
-    }
-    private int GetBaseStat(UnitStat stat)
-    {
-        return stat switch
-        {
-            UnitStat.Power => BaseStats.Power,
-            UnitStat.Health => BaseStats.Health,
-            UnitStat.Stamina => BaseStats.Stamina,
-            UnitStat.Steps => BaseStats.Steps,
-            UnitStat.Speed => BaseStats.Speed,
-            UnitStat.Vision => BaseStats.Vision,
-            _ => throw new ArgumentOutOfRangeException(nameof(stat), stat, null)
-        };
-    }
-
 }
