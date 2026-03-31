@@ -18,7 +18,6 @@ public sealed class UnitDefinition : Entity
         Name = name;
         BaseStats = baseStats;
     }
-    
     public static UnitDefinition Create(VisualId visualId, string name, UnitStats baseStats)
     {
         return new UnitDefinition(visualId, name, baseStats);
