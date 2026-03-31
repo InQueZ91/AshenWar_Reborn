@@ -1,6 +1,9 @@
-﻿namespace Domain.ValueObjects
+﻿using System.Collections.Generic;
+using Domain.Enums;
+
+namespace Domain.ValueObjects
 {
-    public record UnitStats
+    public sealed record UnitStats
     {
         public int Power;
         public int Health;

@@ -2,8 +2,7 @@
 
 namespace Domain.ValueObjects.Identifiers;
 
-public readonly record struct PlayerId(Guid Value)
+public record PlayerId(Guid Value) : Id<PlayerId>(Value)
 {
     public static PlayerId New() => new(Guid.NewGuid());
-    public override string ToString() => Value.ToString();
 };

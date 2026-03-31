@@ -1,14 +1,8 @@
-﻿namespace Domain.ValueObjects.Identifiers;
+﻿using System;
 
-public sealed class VisualId
+namespace Domain.ValueObjects.Identifiers;
+
+public record VisualId(Guid Value) : Id<VisualId>(Value)
 {
-    public string Value { get; }
-
-    public VisualId(string value)
-    {
-        Value = value;
-    }
-    
-    public override string ToString() => Value;
-    public static implicit operator string(VisualId visualId) => visualId.Value;
+    public static VisualId New() => new(Guid.NewGuid());
 }
