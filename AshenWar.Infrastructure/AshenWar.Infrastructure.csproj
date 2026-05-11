@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AshenWar.Application\AshenWar.Application.csproj" />
+      <ProjectReference Include="..\AshenWar.Domain\AshenWar.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

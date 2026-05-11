@@ -1,10 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{638790C4-7865-481B-9843-562951EDCF6D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AshenWar.Domain", "AshenWar.Domain\AshenWar.Domain.csproj", "{638790C4-7865-481B-9843-562951EDCF6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{0C1423F4-2593-497D-8C05-9B8E86B7552A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AshenWar.Application", "AshenWar.Application\AshenWar.Application.csproj", "{0C1423F4-2593-497D-8C05-9B8E86B7552A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{0070DE0C-32AB-4604-B864-CEB4A6CEDF64}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AshenWar.Tests", "AshenWar.Tests\AshenWar.Tests.csproj", "{0070DE0C-32AB-4604-B864-CEB4A6CEDF64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AshenWar.Api", "AshenWar.Api\AshenWar.Api.csproj", "{EDC6F9DB-5521-4D08-9639-1D8B6582EA45}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AshenWar.Infrastructure", "AshenWar.Infrastructure\AshenWar.Infrastructure.csproj", "{7EB0AFF5-4D3A-467B-BE21-055336539F52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +28,13 @@ Global
 		{0070DE0C-32AB-4604-B864-CEB4A6CEDF64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0070DE0C-32AB-4604-B864-CEB4A6CEDF64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0070DE0C-32AB-4604-B864-CEB4A6CEDF64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDC6F9DB-5521-4D08-9639-1D8B6582EA45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDC6F9DB-5521-4D08-9639-1D8B6582EA45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDC6F9DB-5521-4D08-9639-1D8B6582EA45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDC6F9DB-5521-4D08-9639-1D8B6582EA45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EB0AFF5-4D3A-467B-BE21-055336539F52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EB0AFF5-4D3A-467B-BE21-055336539F52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EB0AFF5-4D3A-467B-BE21-055336539F52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EB0AFF5-4D3A-467B-BE21-055336539F52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
