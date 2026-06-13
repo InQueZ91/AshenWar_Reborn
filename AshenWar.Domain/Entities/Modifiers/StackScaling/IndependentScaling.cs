@@ -1,6 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using AshenWar.Domain.Interfaces;
 
-namespace Domain.Entities.Modifiers.StackScaling;
+namespace AshenWar.Domain.Entities.Modifiers.StackScaling;
 
 // Value never changes regardless of stacks
 public sealed class IndependentScaling : IStackScaling

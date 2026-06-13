@@ -1,4 +1,4 @@
-﻿namespace Domain.Enums.Conditions;
+﻿namespace AshenWar.Domain.Enums.Conditions;
 
 // How does stack count affect modifier value?
 public enum StackScaling

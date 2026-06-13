@@ -1,15 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Domain.Entities.Abilities.TargetFilters;
+namespace AshenWar.Domain.Entities.Abilities.TargetFilters;
 
-public class AnyOf(params ITargetFilter[] filters) : ITargetFilter
+public class AnyOf : ITargetFilter
 {
+    public required IReadOnlyList<ITargetFilter> Filters { get; init; }
     public IEnumerable<ITargetable> Apply(IEnumerable<ITargetable> candidates, ITargetable source)
     {
         var list = candidates.ToList();
-        return filters.SelectMany(f => f.Apply(list, source)).Distinct();
+        return Filters.SelectMany(f => f.Apply(list, source)).Distinct();
     }
 }

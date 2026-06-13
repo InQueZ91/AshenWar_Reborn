@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.LocalIdentifiers.Abilities;
+namespace AshenWar.Domain.ValueObjects.LocalIdentifiers.Abilities;
 
 public record PassiveTriggerId(Guid Value) : LocalId<PassiveTriggerId>(Value)
 {

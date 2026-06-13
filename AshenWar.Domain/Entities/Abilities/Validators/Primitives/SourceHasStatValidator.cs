@@ -1,12 +1,19 @@
-﻿using Domain.Entities.Actions;
-using Domain.Entities.Stats;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
+﻿using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Entities.Stats;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Domain.Entities.Abilities.Validators.Primitives;
+namespace AshenWar.Domain.Entities.Abilities.Validators.Primitives;
 
-public sealed class SourceHasStatValidator(int minimum, StatDefinition stat) : IValidator
+public sealed record SourceHasStatValidator(int Minimum, StatDefinition Stat) : IValidator
 {
-    public bool Check(ActionContext context) 
-        => context.Source is IStatHolder holder && holder.GetMaxStat(stat) >= minimum;
+    public bool Check(ActionContext context)
+    { 
+        if (context.Source is not IUnit unit) return false;
+        
+        var baseValue = unit.Stats.Get(Stat);
+        var effective = ModifierCalculator.Calculate(baseValue, Stat, unit.Conditions, unit.Tags);
+        return effective >= Minimum;
+    }
 }

@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Abilities.TargetShapes;
+namespace AshenWar.Domain.Entities.Abilities.TargetShapes;
 
-public class Single : ITargetShape
+public sealed record Single : ITargetShape
 {
     public bool RequiresInput => true;
-    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IBoard board) 
+    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IReadOnlyBoard readOnlyBoard) 
         => [input];
 }

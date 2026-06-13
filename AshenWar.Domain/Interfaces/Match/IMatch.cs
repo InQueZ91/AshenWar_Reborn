@@ -1,13 +1,19 @@
-﻿using Domain.Entities.Conditions.Global;
-using Domain.Enums;
-using Domain.Interfaces.Conditions;
-using Domain.ValueObjects.Identifiers.Match;
+﻿using AshenWar.Domain.Entities.Conditions.Global;
+using AshenWar.Domain.Entities.Tiles;
+using AshenWar.Domain.Entities.Units;
+using AshenWar.Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Interfaces.Match;
+namespace AshenWar.Domain.Interfaces.Match;
 
-public interface IMatch : IConditionHolder<GlobalCondition>
+public interface IMatch : IReadOnlyMatch, ICondition<GlobalCondition>
 {
-    MatchId Id { get; }
-    MatchPhase Phase { get; }
-    IBoard BoardState { get; }
+    IBoard Board { get; }
+    
+    void SpawnUnit(Unit unit, HexCoord position);
+    void DespawnUnit(IUnit unit);
+    
+    void SpawnTile(Tile tile, HexCoord position);
+    void DespawnTile(ITile tile);
 }

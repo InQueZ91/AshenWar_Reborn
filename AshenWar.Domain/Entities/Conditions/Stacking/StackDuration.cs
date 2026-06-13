@@ -1,7 +1,7 @@
 ﻿using System;
-using Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Domain.Entities.Conditions.Stacking;
+namespace AshenWar.Domain.Entities.Conditions.Stacking;
 
 /// Add incoming duration to remaining — incoming discarded
 public sealed class StackDuration : IStackingBehavior

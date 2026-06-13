@@ -1,10 +1,10 @@
-﻿using Domain.Entities.Actions;
-using Domain.Interfaces.Abilities;
+﻿using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Interfaces.Abilities;
 
-namespace Domain.Entities.Abilities.Validators.Primitives;
+namespace AshenWar.Domain.Entities.Abilities.Validators.Primitives;
 
-public sealed class TurnNumberModValidator(int modulo, int remainder) : IValidator
+public sealed record TurnNumberModValidator(int Modulo, int Remainder) : IValidator
 {
     public bool Check(ActionContext context) 
-        => context.MatchContext.TurnNumber % modulo == remainder;
+        => context.MatchContext.TurnNumber % Modulo == Remainder;
 }

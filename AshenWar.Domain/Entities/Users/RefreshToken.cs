@@ -1,7 +1,7 @@
 ﻿using System;
-using Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
 
-namespace Domain.Entities.Users;
+namespace AshenWar.Domain.Entities.Users;
 
 public sealed class RefreshToken
 {
@@ -13,22 +13,23 @@ public sealed class RefreshToken
     public bool IsRevoked { get; private set;}
     
     private RefreshToken() { } // EF Core
-
+    private RefreshToken(UserId userId, string tokenHash, DateTimeOffset expiresAt, DateTimeOffset createdAt,
+        bool isRevoked)
+    {
+        Id = Guid.NewGuid();
+        UserId = userId;
+        TokenHash = tokenHash;
+        ExpiresAt = expiresAt;
+        CreatedAt = createdAt;
+        IsRevoked = isRevoked;
+    }
     public static RefreshToken Create(UserId userId, string tokenHash, DateTimeOffset expiresAt)
     {
         ArgumentNullException.ThrowIfNull(userId);
         if (string.IsNullOrWhiteSpace(tokenHash))
             throw new ArgumentException("Token hash cannot be empty.", nameof(tokenHash));
 
-        return new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            TokenHash = tokenHash,
-            ExpiresAt = expiresAt,
-            CreatedAt = DateTimeOffset.UtcNow,
-            IsRevoked = false
-        };
+        return new RefreshToken(userId, tokenHash, expiresAt, DateTimeOffset.UtcNow, false);
     }
     
     public void Revoke() => IsRevoked = true;

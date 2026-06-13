@@ -1,9 +1,6 @@
-﻿using Domain.Interfaces.Actions;
-using Domain.ValueObjects;
+﻿using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Actions.Definitions.Movement;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Movement;
 
-public sealed class Move : IActionDefinition
-{
-    public HexCoord Destination { get; init; } = null!;
-}
+public sealed record Move(HexCoord Destination) : IActionDefinition;

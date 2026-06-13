@@ -1,6 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using AshenWar.Domain.Interfaces;
 
-namespace Domain.Entities.Modifiers.StackScaling;
+namespace AshenWar.Domain.Entities.Modifiers.StackScaling;
 
 public sealed class AdditiveScaling : IStackScaling
 {

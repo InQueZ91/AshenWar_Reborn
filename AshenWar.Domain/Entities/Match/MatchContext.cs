@@ -1,12 +1,13 @@
-﻿using Domain.Interfaces;
-using Domain.Interfaces.Match;
+﻿using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Match;
 
-namespace Domain.Entities.Match;
+namespace AshenWar.Domain.Entities.Match;
 
-public sealed class MatchContext(IMatchCommand match, ITriggerRegistry triggerRegistry, int turnNumber)
+public sealed class MatchContext(IMatch match, ITriggerRegistry triggerRegistry, int turnNumber)
 {
-    public IMatchCommand Match { get; } = match;
-    public IBoardCommand Board => Match.Board;
+    public IMatch Match { get; } = match;
+    public IBoard Board => Match.Board;
     public ITriggerRegistry TriggerRegistry { get; } = triggerRegistry;
     public int TurnNumber { get; } = turnNumber;
 }

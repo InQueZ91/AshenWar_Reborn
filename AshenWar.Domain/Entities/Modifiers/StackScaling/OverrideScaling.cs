@@ -1,6 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using AshenWar.Domain.Interfaces;
 
-namespace Domain.Entities.Modifiers.StackScaling;
+namespace AshenWar.Domain.Entities.Modifiers.StackScaling;
 
 // Ignore baseValue entirely - pure stack-driven value
 public sealed class OverrideScaling : IStackScaling

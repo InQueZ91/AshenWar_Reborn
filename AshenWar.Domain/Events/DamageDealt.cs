@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Events;
+namespace AshenWar.Domain.Events;
 
 public sealed record DamageDealt(UnitId UnitId, int Damage, IReadOnlySet<EntityTag> SourceTags) : IDomainEvent;

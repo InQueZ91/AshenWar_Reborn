@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Domain.ValueObjects.Identifiers.Conditions;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
 
-namespace Domain.ValueObjects;
+namespace AshenWar.Domain.ValueObjects;
 
 public sealed record GlobalEvent(int TurnNumber, int Stacks, IReadOnlyList<GlobalConditionDefinitionId> Pool);

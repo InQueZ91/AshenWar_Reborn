@@ -1,4 +1,4 @@
-﻿namespace Domain.Interfaces
+﻿namespace AshenWar.Domain.Interfaces
 {
     public interface IDomainEvent
     {

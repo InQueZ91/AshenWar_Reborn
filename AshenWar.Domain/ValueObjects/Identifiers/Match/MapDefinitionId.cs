@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Match;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Match;
 
 public sealed record MapDefinitionId(Guid Value) : Id<MapDefinitionId>(Value)
 {

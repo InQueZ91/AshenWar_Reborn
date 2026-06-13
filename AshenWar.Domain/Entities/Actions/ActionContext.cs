@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Domain.Entities.Match;
-using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
+using AshenWar.Domain.Entities.Match;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Actions;
+namespace AshenWar.Domain.Entities.Actions;
 
 public sealed record ActionContext(
     ITargetable Source,

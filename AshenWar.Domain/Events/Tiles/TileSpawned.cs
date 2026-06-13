@@ -1,7 +1,7 @@
-﻿using Domain.Interfaces;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Tiles;
+﻿using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
 
-namespace Domain.Events.Tiles;
+namespace AshenWar.Domain.Events.Tiles;
 
 public record TileSpawned(TileId TileId, HexCoord Position) : IDomainEvent;

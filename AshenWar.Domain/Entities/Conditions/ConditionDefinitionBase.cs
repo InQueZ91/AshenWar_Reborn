@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Entities.Conditions.Stacking;
-using Domain.Entities.Effects;
-using Domain.Enums.Conditions;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Conditions;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
+using System.Text.Json.Serialization;
+using AshenWar.Domain.Entities.Conditions.Global;
+using AshenWar.Domain.Entities.Conditions.Stacking;
+using AshenWar.Domain.Entities.Conditions.Tile;
+using AshenWar.Domain.Entities.Conditions.Unit;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Conditions;
+namespace AshenWar.Domain.Entities.Conditions;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(GlobalConditionDefinition), "Global")]
+[JsonDerivedType(typeof(TileConditionDefinition), "Tile")]
+[JsonDerivedType(typeof(UnitConditionDefinition), "Unit")]
 public abstract class ConditionDefinitionBase(string name)
 {
     private readonly HashSet<EntityTag> _tags = [];
@@ -59,7 +66,7 @@ public abstract class ConditionDefinitionBase(string name)
     }
 
     // Baked in - each subclass defines its own candidate strategy
-    public abstract IReadOnlyList<ITargetable> ResolveCandidates(ITargetable? holder, IBoard board);
+    public abstract IReadOnlyList<ITargetable> ResolveCandidates(ITargetable? holder, IReadOnlyBoard readOnlyBoard);
     
     // Filter and guard
     public void SetFilter(ITargetFilter filter) => Filter = filter;

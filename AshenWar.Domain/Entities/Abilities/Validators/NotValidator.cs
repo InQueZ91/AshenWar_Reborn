@@ -1,9 +1,10 @@
-﻿using Domain.Entities.Actions;
-using Domain.Interfaces.Abilities;
+﻿using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Interfaces.Abilities;
 
-namespace Domain.Entities.Abilities.Validators;
+namespace AshenWar.Domain.Entities.Abilities.Validators;
 
-public sealed class NotValidator(IValidator validator) : IValidator
+public sealed record NotValidator : IValidator
 {
-    public bool Check(ActionContext context) => !validator.Check(context); 
+    public required IValidator Validator { get; init; }
+    public bool Check(ActionContext context) => !Validator.Check(context); 
 }

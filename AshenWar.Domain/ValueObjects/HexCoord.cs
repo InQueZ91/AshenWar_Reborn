@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Domain.ValueObjects;
+namespace AshenWar.Domain.ValueObjects;
 
 public sealed record HexCoord(int Q, int R)
 {

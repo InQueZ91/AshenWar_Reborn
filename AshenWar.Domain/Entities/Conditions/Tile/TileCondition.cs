@@ -1,23 +1,40 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Modifiers;
-using Domain.Interfaces.Entities;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
-namespace Domain.Entities.Conditions.Tile;
+namespace AshenWar.Domain.Entities.Conditions.Tile;
 
-public sealed class TileCondition : ConditionBase, IModifierProvider
+public sealed class TileCondition : ConditionBase, IModifierSource
 {
     public override TileConditionDefinition Definition { get; }
 
-    private TileCondition(TileConditionDefinition definition, int stacks) :
-        base(definition.BaseDuration, stacks, definition.MaxStacks)
+    private TileCondition(ConditionId id, TileConditionDefinition definition, int remainingDuration, int stacks) :
+        base(id, remainingDuration, stacks, definition.MaxStacks)
         => Definition = definition;
 
     public static TileCondition Instantiate(TileConditionDefinition definition, int stacks = 1)
-        => new(definition, stacks);
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        return new TileCondition(ConditionId.New(), definition, definition.BaseDuration, stacks);
+    }
+
+    public static TileCondition Rehydrate(ConditionId id,
+        TileConditionDefinition definition,
+        int remainingDuration,
+        int remainingStacks)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        return new TileCondition(id, definition, remainingDuration, remainingStacks);
+    }
     
-    public IEnumerable<(ModifierDefinition Definition, int Stacks)> GetModifierEntries() 
-        => Definition.ModifierDefinitions.Select(m => (m, Stacks));
+    public IEnumerable<(Modifier Modifier, int Stacks)> GetModifiers() 
+        => Definition.Modifiers.Select(m => (m, Stacks: CurrentStacks));
 
     public override void AddStacks(int stacks) => RebuildModifiers();
     public override void SetStacks(int stacks) => RebuildModifiers();

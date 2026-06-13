@@ -1,11 +1,10 @@
-﻿using Domain.Entities.Actions.ValueSources;
-using Domain.Interfaces.Actions;
-using Domain.ValueObjects.Identifiers.Conditions;
+﻿using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
 
-namespace Domain.Entities.Actions.Definitions.Condition;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Condition;
 
-public sealed class ApplyUnitCondition : IActionDefinition
+public sealed record ApplyUnitCondition : IActionDefinition
 {
-    public UnitConditionDefinitionId UnitConditionDefinitionId { get; init; } = null!;
+    public required UnitConditionDefinitionId UnitConditionDefinitionId { get; init; }
     public ValueSource Stacks { get; init; } = ValueSource.Fixed(1);
 }

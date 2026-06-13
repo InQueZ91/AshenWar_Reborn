@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects.Identifiers.Players;
+﻿using AshenWar.Domain.ValueObjects.Identifiers.Players;
 
-namespace Domain.ValueObjects;
+namespace AshenWar.Domain.ValueObjects;
 
 public sealed record MatchOutcome
 {

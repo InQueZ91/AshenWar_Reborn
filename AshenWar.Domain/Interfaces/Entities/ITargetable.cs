@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects;
+﻿using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Interfaces.Entities;
+namespace AshenWar.Domain.Interfaces.Entities;
 
 public interface ITargetable
 {

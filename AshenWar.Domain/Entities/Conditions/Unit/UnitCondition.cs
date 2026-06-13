@@ -1,23 +1,40 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Modifiers;
-using Domain.Interfaces.Entities;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
-namespace Domain.Entities.Conditions.Unit;
+namespace AshenWar.Domain.Entities.Conditions.Unit;
 
-public sealed class UnitCondition : ConditionBase, IModifierProvider
+public sealed class UnitCondition : ConditionBase, IModifierSource
 {
     public override UnitConditionDefinition Definition { get; }
 
-    private UnitCondition(UnitConditionDefinition definition, int stacks) :
-        base(definition.BaseDuration, stacks, definition.MaxStacks)
+    private UnitCondition(ConditionId id, UnitConditionDefinition definition, int remainingDuration, int stacks)
+        : base(id, remainingDuration, stacks, definition.MaxStacks)
         => Definition = definition;
     
     public static UnitCondition Instantiate(UnitConditionDefinition definition, int stacks = 1)
-        => new(definition, stacks);
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        return new UnitCondition(ConditionId.New(), definition, definition.BaseDuration, stacks);
+    }
 
-    public IEnumerable<(ModifierDefinition Definition, int Stacks)> GetModifierEntries() 
-        => Definition.ModifierDefinitions.Select(m => (m, Stacks));
+    public static UnitCondition Rehydrate(ConditionId id,
+        UnitConditionDefinition definition,
+        int remainingDuration,
+        int remainingStacks)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        return new UnitCondition(id, definition, remainingDuration, remainingStacks);   
+    }
+
+    public IEnumerable<(Modifier Modifier, int Stacks)> GetModifiers() 
+        => Definition.Modifiers.Select(m => (m, Stacks: CurrentStacks));
 
     public override void AddStacks(int stacks) => RebuildModifiers();
     public override void SetStacks(int stacks) => RebuildModifiers();

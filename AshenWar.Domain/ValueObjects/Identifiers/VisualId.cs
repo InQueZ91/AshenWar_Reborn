@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers;
+namespace AshenWar.Domain.ValueObjects.Identifiers;
 
 public record VisualId(Guid Value) : Id<VisualId>(Value)
 {

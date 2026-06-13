@@ -1,9 +1,6 @@
-﻿using Domain.Interfaces.Actions;
-using Domain.ValueObjects.Identifiers.Abilities;
+﻿using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects.Identifiers.Abilities;
 
-namespace Domain.Entities.Actions.Definitions.Ability;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Ability;
 
-public sealed class GrantPassive : IActionDefinition
-{
-    public PassiveAbilityDefinitionId PassiveAbilityDefinitionId { get; init; } = null!;
-}
+public sealed record GrantPassive(PassiveDefinitionId PassiveDefinitionId) : IActionDefinition;

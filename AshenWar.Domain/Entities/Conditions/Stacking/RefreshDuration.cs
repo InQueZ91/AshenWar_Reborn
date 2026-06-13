@@ -1,11 +1,14 @@
 ﻿using System;
-using Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Domain.Entities.Conditions.Stacking;
+namespace AshenWar.Domain.Entities.Conditions.Stacking;
 
 /// Reset existing duration to base — incoming discarded
 public sealed class RefreshDuration : IStackingBehavior
 {
-    public void Apply(ConditionBase existing, ConditionBase incoming, Action<ConditionBase> add, Action<ConditionBase> remove)
+    public void Apply(ConditionBase existing,
+        ConditionBase incoming,
+        Action<ConditionBase> add,
+        Action<ConditionBase> remove)
         => existing.RefreshDuration();
 }

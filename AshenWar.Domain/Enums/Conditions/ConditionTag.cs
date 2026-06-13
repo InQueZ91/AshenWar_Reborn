@@ -1,4 +1,4 @@
-﻿namespace Domain.Enums.Conditions;
+﻿namespace AshenWar.Domain.Enums.Conditions;
 
 public enum ConditionTag
 {

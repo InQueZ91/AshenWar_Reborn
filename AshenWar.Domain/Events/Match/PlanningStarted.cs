@@ -1,7 +1,7 @@
 ﻿using System;
-using Domain.Interfaces;
-using Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
 
-namespace Domain.Events.Match;
+namespace AshenWar.Domain.Events.Match;
 
 public sealed record PlanningStarted(TurnId TurnId, int TurnNumber, DateTimeOffset StartedAt, TimeSpan Duration) : IDomainEvent;

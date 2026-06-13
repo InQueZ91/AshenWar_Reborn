@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Units
+namespace AshenWar.Domain.ValueObjects.Identifiers.Units
 {
     public record UnitId(Guid Value) : Id<UnitId>(Value)
     {

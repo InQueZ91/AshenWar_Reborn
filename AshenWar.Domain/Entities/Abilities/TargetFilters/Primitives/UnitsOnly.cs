@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Domain.Entities.Abilities.TargetFilters.Primitives;
+namespace AshenWar.Domain.Entities.Abilities.TargetFilters.Primitives;
 
-public class UnitsOnly : ITargetFilter
+public sealed record UnitsOnly : ITargetFilter
 {
     public IEnumerable<ITargetable> Apply(IEnumerable<ITargetable> candidates, ITargetable source)
-        => candidates.OfType<IUnit>();
+        => candidates.OfType<IReadOnlyUnit>();
 }

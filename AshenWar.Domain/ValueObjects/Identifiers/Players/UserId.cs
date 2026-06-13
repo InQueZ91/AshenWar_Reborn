@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Players;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Players;
 
 public record UserId(Guid Value) : Id<UserId>(Value)
 {

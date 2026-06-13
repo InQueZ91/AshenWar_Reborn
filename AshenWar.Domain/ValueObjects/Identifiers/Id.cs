@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers;
+namespace AshenWar.Domain.ValueObjects.Identifiers;
 
 public abstract record Id<T>(Guid Value) where T : Id<T>
 {
-    public override string ToString() => Value.ToString();
+    public sealed override string ToString() => Value.ToString();
 }

@@ -1,16 +1,20 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Abilities.TargetShapes;
+namespace AshenWar.Domain.Entities.Abilities.TargetShapes;
 
-public class Cone(int range) : ITargetShape
+public sealed record Cone(int Range) : ITargetShape
 {
     public bool RequiresInput => true;
-    public int Range { get; } = range;
-
-    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IBoard board)
-        => board.GetInCone(origin, input.Position, Range);
+    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IReadOnlyBoard readOnlyBoard)
+    {
+        if (input.Position is null)
+            throw new DomainException($"No input position for {input} to resolve cone");
+        
+        return readOnlyBoard.GetInCone(origin, input.Position, Range);
+    }
 }

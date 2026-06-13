@@ -1,41 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Abilities.Passive.Triggers;
-using Domain.Entities.Conditions;
-using Domain.Entities.Conditions.Global;
-using Domain.Entities.Tiles;
-using Domain.Entities.Units;
-using Domain.Entities.Users;
-using Domain.Enums;
-using Domain.Enums.Conditions;
-using Domain.Events.Match;
-using Domain.Events.Tiles;
-using Domain.Events.Units;
-using Domain.Interfaces;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Tiles;
-using Domain.ValueObjects.Identifiers.Units;
-using Domain.ValueObjects.LocalIdentifiers.Conditions;
+using AshenWar.Domain.Entities.Abilities.Passives.Triggers;
+using AshenWar.Domain.Entities.Conditions;
+using AshenWar.Domain.Entities.Conditions.Global;
+using AshenWar.Domain.Entities.Tiles;
+using AshenWar.Domain.Entities.Units;
+using AshenWar.Domain.Entities.Users;
+using AshenWar.Domain.Enums;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.Events.Match;
+using AshenWar.Domain.Events.Tiles;
+using AshenWar.Domain.Events.Units;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
-namespace Domain.Entities.Match;
+namespace AshenWar.Domain.Entities.Match;
 
 /// <summary>
 /// Root aggregate for a match.
 /// Owns Board, both Players, turn history and global ability.
 /// All cross-entity coordination goes through Match - nothing reaches across aggregate boundaries directly. 
 /// </summary>
-public sealed class Match : MatchEntity, IMatchCommand
+public sealed class Match : DomainEntity, IMatch
 {
-    private readonly List<Turn> _history = [];
     private readonly List<GlobalCondition> _conditions = [];
-    private readonly Dictionary<UnitId, Unit> _units = [];
-    private readonly Dictionary<TileId, Tile> _tiles = [];
     
-    public MatchId Id { get; } = MatchId.New();
+    public MatchId Id { get; private set; }
     public MatchPhase Phase { get; private set;}
     
     // Players
@@ -43,138 +41,161 @@ public sealed class Match : MatchEntity, IMatchCommand
     public Player RedSide { get; }
     
     // Board
-    public IBoard BoardState => Board;
-    public IBoardCommand Board { get; } = new Board();
-    public ITriggerRegistry TriggerRegistry { get; } = new TriggerRegistry();
+    public IReadOnlyBoard ReadOnlyBoardState => Board;
+    public IBoard Board { get; private set; }
+    public ITriggerRegistry TriggerRegistry { get; }
 
     // Turn
     public Turn CurrentTurn { get; private set; }
-    public IReadOnlyList<Turn> History => _history.AsReadOnly();
-    
-    // Phase
-    public bool BlueDeployConfirmed { get; private set; }
-    public bool RedDeployConfirmed { get; private set; }
-    public bool BothDeployConfirmed => BlueDeployConfirmed && RedDeployConfirmed;
     
     // Global conditions
     public IReadOnlyList<GlobalCondition> Conditions => _conditions.AsReadOnly();
     
+    // Might store only match definition id, then fetch from DB
     // Post-creation scalars from definitions
-    public TimeSpan PlanningDuration { get; }
-    public IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> SpawnPoints { get; }
+    public TimeSpan PlanningDurationSeconds { get; }
+    public IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> DeploymentPoints { get; }
     public IReadOnlyList<GlobalEvent> GlobalEvents { get; }
     
     // Construction
     private Match(
+        MatchId id,
+        MatchPhase phase,
         Player blueSide,
         Player redSide,
-        IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> spawnPoints,
+        Board board,
+        Turn currentTurn,
+        IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> deploymentPoints,
         IReadOnlyList<GlobalEvent> globalEvents,
-        TimeSpan planningDuration)
+        TimeSpan planningDurationSeconds)
     {
+        Id = id;
+        Phase = phase;
         BlueSide = blueSide;
         RedSide = redSide;
-        SpawnPoints = spawnPoints;
+        Board = board;
+        TriggerRegistry = new TriggerRegistry();
+        CurrentTurn = currentTurn;
+        DeploymentPoints = deploymentPoints;
         GlobalEvents = globalEvents;
-        PlanningDuration = planningDuration;
-
-        Phase = MatchPhase.Deploy;
-        CurrentTurn = Turn.Begin(1, BlueSide.UserId, RedSide.UserId); // Turn 1 created immediately, begins on StartMatch
+        PlanningDurationSeconds = planningDurationSeconds;
     }
     
-    public static Match Create(
+    public static Match Instantiate(
         Player blueSide,
         Player redSide,
         IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> spawnPoints,
         IReadOnlyList<GlobalEvent> globalEvents,
-        TimeSpan planningDuration)
+        TimeSpan planningDurationSeconds)
     {
         ArgumentNullException.ThrowIfNull(blueSide);
         ArgumentNullException.ThrowIfNull(redSide);
         ArgumentNullException.ThrowIfNull(spawnPoints);
         ArgumentNullException.ThrowIfNull(globalEvents);
+
+        // Turn 1 created immediately, begins on StartMatch
+        var currentTurn = Turn.Instantiate(1, blueSide.UserId, redSide.UserId, planningDurationSeconds);
         
-        return new Match(blueSide, redSide, spawnPoints, globalEvents, planningDuration);
+        return new Match(
+            MatchId.New(),
+            MatchPhase.Planning,
+            blueSide,
+            redSide,
+            new Board(),
+            currentTurn,
+            spawnPoints,
+            globalEvents,
+            planningDurationSeconds);
+    }
+    
+    public static Match Rehydrate(
+        MatchId id,
+        MatchPhase phase,
+        Player blueSide,
+        Player redSide,
+        Turn currentTurn,
+        IReadOnlyDictionary<PlayerSide, IReadOnlyList<HexCoord>> spawnPoints,
+        IReadOnlyList<GlobalEvent> globalEvents,
+        TimeSpan planningDurationSeconds,
+        IEnumerable<Unit> units,
+        IEnumerable<Tile> tiles,
+        IEnumerable<GlobalCondition> globalConditions)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(blueSide);
+        ArgumentNullException.ThrowIfNull(redSide);
+        ArgumentNullException.ThrowIfNull(currentTurn);
+        ArgumentNullException.ThrowIfNull(spawnPoints);
+        ArgumentNullException.ThrowIfNull(globalEvents);
+        
+        var board = new Board().Rehydrate(units, tiles);
+
+        var match = new Match(
+            id,
+            phase,
+            blueSide,
+            redSide,
+            board,
+            currentTurn,
+            spawnPoints,
+            globalEvents,
+            planningDurationSeconds
+        );
+
+        // Global conditions - bypass stacking behavior
+        match._conditions.AddRange(globalConditions);
+        
+        // Derived - rebuilt here because board is now fully populated
+        foreach (var unit in board.GetAllUnits())
+            foreach (var passive in unit.Passives)
+                match.TriggerRegistry.Register(unit, passive);
+        
+        foreach (var tile in board.GetAllTiles())
+            foreach (var passive in tile.Passives)
+                match.TriggerRegistry.Register(tile, passive);
+        
+        return match;
     }
     
     // Unit Management
-    public Unit? GetUnitById(UnitId unitId)
-    {
-        return _units.GetValueOrDefault(unitId);
-    }
-    public List<Unit> GetUnitsForPlayer(UserId userId)
-    {
-        return _units.Values.Where(u => u.Owner == userId).ToList();
-    }
-    
     public void SpawnUnit(Unit unit, HexCoord position)
     {
-        // Validation
         ArgumentNullException.ThrowIfNull(unit);
-        ArgumentNullException.ThrowIfNull(position);
         
         Board.PlaceUnit(unit, position);
-        _units.Add(unit.Id, unit);
-        
         RaiseDomainEvent(new UnitSpawned(unit.Id, position));
     }
-    public void DespawnUnit(Unit unit)
+    public void DespawnUnit(IUnit unit)
     {
-        // Validation
         ArgumentNullException.ThrowIfNull(unit);
         
         Board.RemoveUnit(unit);
-        _units.Remove(unit.Id);
-        
         RaiseDomainEvent(new UnitDespawned(unit.Id));
     }
 
     // Tile Management
-    public Tile? GetTileById(TileId tileId)
-    {
-        return _tiles.GetValueOrDefault(tileId);
-    }
     public void SpawnTile(Tile tile, HexCoord position)
     {
-        // Validation
         ArgumentNullException.ThrowIfNull(tile);
-        ArgumentNullException.ThrowIfNull(position);
         
         Board.PlaceTile(tile, position);
-        _tiles.Add(tile.Id, tile);
-        
         RaiseDomainEvent(new TileSpawned(tile.Id, position));
     }
-    public void DespawnTile(Tile tile)
+    public void DespawnTile(ITile tile)
     {
-        // Validation
         ArgumentNullException.ThrowIfNull(tile);
-
-        var unitOnTile = Board.RemoveTile(tile);
-        if (unitOnTile is not null) 
-            DespawnUnit(unitOnTile);
         
-        _tiles.Remove(tile.Id);
-        
+        Board.RemoveTile(tile);
         RaiseDomainEvent(new TileDespawned(tile.Id));
     }
 
     // Phase transition
-    public void ConfirmDeploy(PlayerSide playerSide)
-    {
-        if (playerSide == PlayerSide.Blue)
-            BlueDeployConfirmed = true;
-        else
-            RedDeployConfirmed = true;
-    }
     public void StartMatch()
     {
-        if (Phase != MatchPhase.Deploy)
-            throw new InvalidOperationException("Match can only start from Deploy phase.");
+        if (Phase != MatchPhase.Planning)
+            throw new InvalidOperationException("Match can only start from Planning phase.");
 
-        Phase = MatchPhase.Planning;
-        CurrentTurn.BeginPlanning(PlanningDuration);
-        
+        CurrentTurn.BeginPlanning(PlanningDurationSeconds);
         RaiseDomainEvent(new MatchStarted(Id));
     }
     public void BeginResolution()
@@ -192,13 +213,12 @@ public sealed class Match : MatchEntity, IMatchCommand
             throw new InvalidOperationException("EndResolution called outside of Resolution phase.");
         
         CurrentTurn.MarkAsResolved();
-        _history.Add(CurrentTurn);
         
         RaiseDomainEvent(new ResolutionEnded(CurrentTurn.Id));
     }
     public Turn BeginNextTurn()
     {
-        CurrentTurn = Turn.Begin(CurrentTurn.TurnNumber + 1, BlueSide.UserId, RedSide.UserId);
+        CurrentTurn = Turn.Instantiate(CurrentTurn.TurnNumber + 1, BlueSide.UserId, RedSide.UserId, PlanningDurationSeconds);
         return CurrentTurn;
     }
     public void DeclareWinner(UserId? winnerId)
@@ -208,8 +228,8 @@ public sealed class Match : MatchEntity, IMatchCommand
     }
     public MatchOutcome EvaluateOutcome()
     {
-        var blueAlive = GetUnitsForPlayer(BlueSide.UserId).Any(u => u.IsAlive);
-        var redAlive = GetUnitsForPlayer(RedSide.UserId).Any(u => u.IsAlive);
+        var blueAlive = Board.GetUnitsForPlayer(BlueSide.UserId).Any(u => u.IsAlive);
+        var redAlive = Board.GetUnitsForPlayer(RedSide.UserId).Any(u => u.IsAlive);
         
         return (blueAlive, redAlive) switch
         {
@@ -222,7 +242,7 @@ public sealed class Match : MatchEntity, IMatchCommand
     
     #region Conditions
 
-    // IConditionHolder
+    // IHasConditions
     public GlobalCondition? GetConditionById(ConditionId id)
     {
         return _conditions.FirstOrDefault(c => c.Id == id);
@@ -236,7 +256,7 @@ public sealed class Match : MatchEntity, IMatchCommand
         return _conditions.Any(c => c.Definition.ConditionTags.Overlaps(conditionTags));
     }
     
-    // IConditionCommand
+    // ICondition
     public void ApplyCondition(GlobalCondition incoming)
     {
         var existing = _conditions.FirstOrDefault(gc => gc.Definition.Id == incoming.Definition.Id);
@@ -256,7 +276,6 @@ public sealed class Match : MatchEntity, IMatchCommand
         RemoveCondition(effect);
     }
     
-    // IConditionTarget
     private void AddCondition(ConditionBase condition)
     {
         if (condition is not GlobalCondition incoming)
@@ -275,5 +294,4 @@ public sealed class Match : MatchEntity, IMatchCommand
     }
 
     #endregion
-
 }

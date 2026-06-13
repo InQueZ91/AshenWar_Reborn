@@ -1,11 +1,11 @@
 ﻿using System;
-using Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Domain.Entities.Conditions.Stacking;
+namespace AshenWar.Domain.Entities.Conditions.Stacking;
 
 /// Add stacks to existing — increases modifier intensity
 public sealed class StackIntensity : IStackingBehavior
 {
     public void Apply(ConditionBase existing, ConditionBase incoming, Action<ConditionBase> add, Action<ConditionBase> remove)
-        => existing.AddStacks(incoming.Stacks);
+        => existing.AddStacks(incoming.CurrentStacks);
 }

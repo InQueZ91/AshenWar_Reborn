@@ -1,11 +1,11 @@
-﻿using Domain.Entities.Actions;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
+﻿using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Domain.Entities.Abilities.Validators.Primitives;
+namespace AshenWar.Domain.Entities.Abilities.Validators.Primitives;
 
-public sealed class SourceIsAliveValidator : IValidator
+public sealed record SourceIsAliveValidator : IValidator
 {
     public bool Check(ActionContext context)
-        => context.Source is IUnit { IsAlive: true };
+        => context.Source is IReadOnlyUnit { IsAlive: true };
 }

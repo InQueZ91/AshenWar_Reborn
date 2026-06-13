@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.Exceptions;
+namespace AshenWar.Domain.Exceptions;
 
 public class DomainException: Exception
 {

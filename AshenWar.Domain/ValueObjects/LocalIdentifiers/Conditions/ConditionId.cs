@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.LocalIdentifiers.Conditions;
+namespace AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
 public sealed record ConditionId(Guid Value) : LocalId<ConditionId>(Value)
 {

@@ -1,8 +1,7 @@
-﻿namespace Domain.Enums;
+﻿namespace AshenWar.Domain.Enums;
 
 public enum MatchPhase
 {
-    Deploy,
     Planning,
     Resolution,
     Ended

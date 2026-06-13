@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Domain.Entities.Abilities.TargetFilters;
+namespace AshenWar.Domain.Entities.Abilities.TargetFilters;
 
-public class AllOf(params ITargetFilter[] filters) : ITargetFilter
+public sealed record AllOf : ITargetFilter
 {
+    public required IReadOnlyList<ITargetFilter> Filters { get; init; }
+    
     public IEnumerable<ITargetable> Apply(IEnumerable<ITargetable> candidates, ITargetable source)
     {
-        return filters.Aggregate(candidates, (current, filter) => filter.Apply(current, source));
+        return Filters.Aggregate(candidates, (current, filter) => filter.Apply(current, source));
     }
 }

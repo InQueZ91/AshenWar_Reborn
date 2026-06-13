@@ -1,4 +1,4 @@
-﻿namespace Domain.Enums.Conditions;
+﻿namespace AshenWar.Domain.Enums.Conditions;
 
 // What happens when effect is applied again?
 public enum StackingRule

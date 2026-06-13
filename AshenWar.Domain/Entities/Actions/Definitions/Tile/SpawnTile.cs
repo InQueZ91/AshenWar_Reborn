@@ -1,11 +1,7 @@
-﻿using Domain.Interfaces.Actions;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Tiles;
+﻿using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
 
-namespace Domain.Entities.Actions.Definitions.Tile;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Tile;
 
-public sealed class SpawnTile(TileDefinitionId tileDefinitionId, HexCoord Position) : IActionDefinition
-{
-    public TileDefinitionId TileDefinitionId { get; init; } = tileDefinitionId;
-    public HexCoord Position { get; init; } = Position;
-}
+public sealed record SpawnTile(TileDefinitionId TileDefinitionId, HexCoord Position) : IActionDefinition;

@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects.Identifiers.Players;
+﻿using AshenWar.Domain.ValueObjects.Identifiers.Players;
 
-namespace Domain.Interfaces.Entities;
+namespace AshenWar.Domain.Interfaces.Entities;
 
 public interface IPlayerOwned
 {

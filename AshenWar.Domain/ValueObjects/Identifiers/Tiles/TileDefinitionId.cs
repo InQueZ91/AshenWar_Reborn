@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Tiles;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Tiles;
 
 public record TileDefinitionId(Guid Value) : Id<TileDefinitionId>(Value)
 {

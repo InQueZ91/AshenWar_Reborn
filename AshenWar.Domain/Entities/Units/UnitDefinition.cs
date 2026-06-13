@@ -1,45 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Entities.Stats;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers;
-using Domain.ValueObjects.Identifiers.Abilities;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.Entities.Stats;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers;
+using AshenWar.Domain.ValueObjects.Identifiers.Abilities;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Units;
+namespace AshenWar.Domain.Entities.Units;
 
 public sealed class UnitDefinition
 {
-    private readonly List<ActiveAbilityDefinitionId> _activeAbilities = [];
-    private readonly List<PassiveAbilityDefinitionId> _passiveAbilities = [];
+    private readonly List<AbilityDefinitionId> _abilities = [];
+    private readonly List<PassiveDefinitionId> _passives = [];
     private readonly HashSet<EntityTag> _tags = [];
     
     // Identifiers
     public UnitDefinitionId Id { get; private set; }
     public string Name { get; private set; }
     public VisualId VisualId { get; private set; }
-    public StatBlock BaseStats { get; private set; }
+    public UnitStats BaseStats { get; private set; }
     
-    public IReadOnlyList<ActiveAbilityDefinitionId> ActiveAbilities => _activeAbilities;
-    public IReadOnlyList<PassiveAbilityDefinitionId> PassiveAbilities => _passiveAbilities;
+    public IReadOnlyList<AbilityDefinitionId> Abilities => _abilities;
+    public IReadOnlyList<PassiveDefinitionId> Passives => _passives;
     public IReadOnlySet<EntityTag> Tags => _tags;
 
     // Constructor
-    private UnitDefinition(string name, VisualId visualId, StatBlock statBlock)
+    private UnitDefinition(UnitDefinitionId id, string name, VisualId visualId, UnitStats unitStats)
     {
-        Id = UnitDefinitionId.New();
+        Id = id;
         Name = name;
         VisualId = visualId;
-        BaseStats = statBlock;
+        BaseStats = unitStats;
     } 
-    public static UnitDefinition Create(VisualId visualId, string name, StatBlock statBlock)
+    public static UnitDefinition Create(VisualId visualId, string name, UnitStats unitStats)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be empty.", nameof(name));
         
         ArgumentNullException.ThrowIfNull(visualId);
         
-        return new UnitDefinition(name, visualId, statBlock);
+        return new UnitDefinition(UnitDefinitionId.New(), name, visualId, unitStats);
+    }
+    public static UnitDefinition Load(UnitDefinitionId id, VisualId visualId, string name, UnitStats unitStats)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name cannot be empty.", nameof(name));
+        
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(visualId);
+        ArgumentNullException.ThrowIfNull(unitStats);
+        
+        return new UnitDefinition(id, name, visualId, unitStats);
     }
     
     // Tag methods
@@ -48,14 +59,14 @@ public sealed class UnitDefinition
     public void ClearTags() => _tags.Clear();
     
     // Passive ability methods
-    public void AddPassiveAbility(PassiveAbilityDefinitionId abilityDefinitionId) => _passiveAbilities.Add(abilityDefinitionId);
-    public void RemovePassiveAbility(PassiveAbilityDefinitionId abilityDefinitionId) => _passiveAbilities.Remove(abilityDefinitionId);
-    public void ClearPassiveAbilities() => _passiveAbilities.Clear();
+    public void AddPassive(PassiveDefinitionId definitionId) => _passives.Add(definitionId);
+    public void RemovePassive(PassiveDefinitionId definitionId) => _passives.Remove(definitionId);
+    public void ClearPassives() => _passives.Clear();
     
     // Active ability methods
-    public void AddActiveAbility(ActiveAbilityDefinitionId abilityDefinitionId) => _activeAbilities.Add(abilityDefinitionId);
-    public void RemoveActiveAbility(ActiveAbilityDefinitionId abilityDefinitionId) => _activeAbilities.Remove(abilityDefinitionId);
-    public void ClearActiveAbilities() => _activeAbilities.Clear();
+    public void AddAbility(AbilityDefinitionId abilityDefinitionId) => _abilities.Add(abilityDefinitionId);
+    public void RemoveAbility(AbilityDefinitionId abilityDefinitionId) => _abilities.Remove(abilityDefinitionId);
+    public void ClearAbilities() => _abilities.Clear();
     
     // General methods
     public void ChangeName(string name)
@@ -69,7 +80,7 @@ public sealed class UnitDefinition
         ArgumentNullException.ThrowIfNull(visualId);
         VisualId = visualId;
     }
-    public void SetBaseStats(StatBlock newStats)
+    public void SetStats(UnitStats newStats)
     {
         ArgumentNullException.ThrowIfNull(newStats);
         BaseStats = newStats;

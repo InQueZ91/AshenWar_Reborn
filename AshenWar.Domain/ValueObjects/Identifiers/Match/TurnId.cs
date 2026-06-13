@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Match;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Match;
 
 public record TurnId(Guid Value) : Id<TurnId>(Value)
 {

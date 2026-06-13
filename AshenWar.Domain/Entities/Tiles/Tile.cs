@@ -1,43 +1,94 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Abilities.Passive;
-using Domain.Entities.Conditions;
-using Domain.Entities.Conditions.Tile;
-using Domain.Entities.Modifiers;
-using Domain.Entities.Stats;
-using Domain.Enums.Conditions;
-using Domain.Events.Tiles;
-using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Abilities;
-using Domain.ValueObjects.Identifiers.Tiles;
-using Domain.ValueObjects.LocalIdentifiers.Abilities;
-using Domain.ValueObjects.LocalIdentifiers.Conditions;
+using AshenWar.Domain.Entities.Abilities.Passives;
+using AshenWar.Domain.Entities.Conditions;
+using AshenWar.Domain.Entities.Conditions.Tile;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Entities.Stats;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.Events.Tiles;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers;
+using AshenWar.Domain.ValueObjects.Identifiers.Abilities;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Abilities;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
-namespace Domain.Entities.Tiles;
+namespace AshenWar.Domain.Entities.Tiles;
 
-public sealed class Tile : MatchEntity, ITileCommand
+public sealed class Tile : DomainEntity, ITile
 {
     private readonly List<TileCondition> _conditions = [];
-    private readonly List<PassiveAbility> _passiveAbilities = [];
+    private readonly List<Passive> _passiveAbilities = [];
     
-    public TileId Id { get; } = TileId.New();
+    public TileId Id { get; private set; }
     public TileDefinition Definition { get; }
+    public TileDefinitionId DefinitionId => Definition.Id;
+    public StatBlock Stats => Definition.BaseStats;
+    public IReadOnlySet<EntityTag> Tags => Definition.Tags;
     
     // Runtime state
     public HexCoord? Position { get; private set;}
-    public bool IsOccupied { get; private set;}
     public bool HasFog { get; private set;}
+    public bool IsClaimed { get; private set;}
     public bool IsDestroyed { get; private set;}
     
-    public StatBlock BaseStats => Definition.Stats;
     public IReadOnlyList<TileCondition> Conditions => _conditions.AsReadOnly();
-    public IReadOnlyList<PassiveAbility> PassiveAbilities => _passiveAbilities.AsReadOnly();
+    public IReadOnlyList<Passive> Passives => _passiveAbilities.AsReadOnly();
     
-    private Tile(TileDefinition definition) => Definition = definition;
-    public static Tile Instantiate(TileDefinition definition) => new(definition);
+    // Constructor
+    private Tile(TileId id,
+        TileDefinition definition,
+        HexCoord? position,
+        bool hasFog,
+        bool isClaimed,
+        bool isDestroyed)
+    {
+        Id = id;
+        Definition = definition;
+        Position = position;
+        HasFog = hasFog;
+        IsClaimed = isClaimed;
+        IsDestroyed = isDestroyed;
+    }
+    public static Tile Instantiate(TileDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+     
+        return new Tile(TileId.New(), definition, null, false, false, false);
+    }
+    public static Tile Rehydrate(
+        TileId id,
+        TileDefinition definition,
+        HexCoord? position,
+        bool hasFog,
+        bool isClaimed,
+        bool isDestroyed,
+        IEnumerable<TileCondition> conditions,
+        IEnumerable<Passive> passives)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        if (position is null && isClaimed)
+            throw new DomainException("Tile must have a position if it is claimed.");
+        
+        if (position is not null && isDestroyed)
+            throw new DomainException("Tile cannot be destroyed if it has a position.");
+        
+        var tile = new Tile(id, definition, position, hasFog, isClaimed, isDestroyed);
+        
+        // Bypass add/apply logics
+        tile._conditions.AddRange(conditions);
+        tile._passiveAbilities.AddRange(passives);
 
+        return tile;
+    }
+
+    // Tile Management
     private void ThrowIfDestroyed()
     {
         if (IsDestroyed)
@@ -48,51 +99,59 @@ public sealed class Tile : MatchEntity, ITileCommand
         ThrowIfDestroyed();
         if (HasFog) return;
         HasFog = true;
-        
-        // Raise event
+     
+        RaiseDomainEvent(new TileFogged(Id));
     }
     public void RemoveFog()
     {
         ThrowIfDestroyed();
         if (!HasFog) return;
         HasFog = false;
-        // Raise event
+        
+        RaiseDomainEvent(new TileRevealed(Id));
     }
     public void Destroy()
     {
         ThrowIfDestroyed();
         IsDestroyed = true;
-        // Raise event
+        
+        RaiseDomainEvent(new TileDestroyed(Id));
     }
-    internal void SetOccupied(bool isOccupied)
+    internal void Release()
     {
         ThrowIfDestroyed();
-        IsOccupied = isOccupied;
-        // Raise event
+        IsClaimed = false;
+        
+        RaiseDomainEvent(new TileReleased(Id));
     }
-
-    // IStatHolder
-    public int GetMaxStat(StatDefinition stat) 
-        => ModifierCalculator.Calculate(BaseStats.Get(stat), _conditions, stat.Id, Definition.Tags);
-
-    // IPassiveAbilityHolder
-    public PassiveAbility? GetPassiveByDefinitionId(PassiveAbilityDefinitionId abilityDefinitionId)
+    internal void Claim()
     {
-        ArgumentNullException.ThrowIfNull(abilityDefinitionId);
-        return _passiveAbilities.FirstOrDefault(p => p.Definition.Id == abilityDefinitionId);
+        ThrowIfDestroyed();
+        IsClaimed = true;
+        
+        RaiseDomainEvent(new TileClaimed(Id));
     }
 
-    // IPassiveAbilityCommand
-    public void AddPassive(PassiveAbility ability)
+    // IHasPassives
+    public Passive? GetPassiveByDefinitionId(PassiveDefinitionId definitionId)
+    {
+        ArgumentNullException.ThrowIfNull(definitionId);
+        return _passiveAbilities.FirstOrDefault(p => p.Definition.Id == definitionId);
+    }
+
+    // IPassive
+    public void AddPassive(Passive ability)
     {
         _passiveAbilities.Add(ability);
     }
-    public void RemovePassive(PassiveAbilityId passiveAbilityId)
+    public void RemovePassive(PassiveId passiveId)
     {
-        _passiveAbilities.RemoveAll(p => p.Id == passiveAbilityId);
+        _passiveAbilities.RemoveAll(p => p.Id == passiveId);
     }
 
-    // IConditionHolder
+    #region Conditions
+
+    // IHasConditions
     public TileCondition? GetConditionById(ConditionId id)
     {
         return _conditions.FirstOrDefault(c => c.Id == id);
@@ -106,7 +165,7 @@ public sealed class Tile : MatchEntity, ITileCommand
         return _conditions.Any(c => c.Definition.ConditionTags.Overlaps(conditionTags));
     }
 
-    // IConditionCommand
+    // ICondition
     public void ApplyCondition(TileCondition incoming)
     {
         var existing = _conditions.FirstOrDefault(s => s.Definition.Id == incoming.Definition.Id);
@@ -126,7 +185,6 @@ public sealed class Tile : MatchEntity, ITileCommand
         RemoveCondition(effect);
     }
     
-    // IConditionTarget
     private void AddCondition(ConditionBase condition)
     {
         if (condition is not TileCondition incoming)
@@ -143,6 +201,18 @@ public sealed class Tile : MatchEntity, ITileCommand
         _conditions.Remove(incoming);
         RaiseDomainEvent(new TileConditionRemoved(Id, incoming.Definition.Id));
     }
+
+    #endregion
     
-    internal void SetPosition(HexCoord position) => Position = position;
+    // IHasStats
+    public int GetFinalStat(StatDefinition stat)
+    {
+        return ModifierCalculator.Calculate(Stats.Get(stat), stat, _conditions, Tags);
+    }
+    
+    internal void PlacedAt(HexCoord position) => Position = position;
+    internal void Removed() => Position = null;
+    
+    internal void RehydrateCondition(TileCondition condition) => AddCondition(condition);
+    internal void RehydratePassive(Passive passive) => AddPassive(passive);
 }

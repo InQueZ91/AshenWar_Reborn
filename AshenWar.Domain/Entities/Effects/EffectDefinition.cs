@@ -1,25 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Interfaces.Actions;
-using Domain.ValueObjects.Identifiers.Effects;
+using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects.Identifiers.Effects;
 
-namespace Domain.Entities.Effects;
+namespace AshenWar.Domain.Entities.Effects;
 
-public sealed class EffectDefinition(string name)
+public sealed class EffectDefinition
 {
     private readonly List<IActionDefinition> _actions = [];
-
-    public EffectDefinitionId Id { get; } = EffectDefinitionId.New();
-    public string Name { get; private set; } = name;
+    
+    public EffectDefinitionId Id { get; }
+    public string Name { get; private set; }
     public IReadOnlyList<IActionDefinition> Actions =>  _actions;
     
     // Constructor
+    private EffectDefinition(EffectDefinitionId id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
     public static EffectDefinition Create(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Effect name cannot be empty.", nameof(name));
         
-        return new EffectDefinition(name);
+        return new EffectDefinition(EffectDefinitionId.New(), name);
+    }
+    public static EffectDefinition Load(EffectDefinitionId id, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Effect name cannot be empty.", nameof(name));
+        
+        return new EffectDefinition(id, name);
     }
     
     public void ChangeName(string name)

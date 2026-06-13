@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Enums;
-using Domain.Exceptions;
-using Domain.ValueObjects.Identifiers;
-using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.Enums;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.ValueObjects.Identifiers;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Lobbies;
+namespace AshenWar.Domain.Entities.Lobbies;
 
-public sealed class Lobby : MatchEntity
+public sealed class Lobby : DomainEntity
 {
     public LobbyId Id { get; } = LobbyId.New();
     public MatchDefinitionId MatchDefinitionId { get; }
     public MapDefinitionId MapDefinitionId { get; }
-    public LobbySlot Blue { get; }
-    public LobbySlot Red { get; }
-    public bool BothReady => Blue.IsReady && Red.IsReady;
+    public PlayerSlot Blue { get; }
+    public PlayerSlot Red { get; }
+    public bool BothSubmitted => Blue.HasSubmitted && Red.HasSubmitted;
 
     private Lobby(
         UserId blueUserId,
@@ -26,8 +26,8 @@ public sealed class Lobby : MatchEntity
     {
         MatchDefinitionId = matchDefinitionId;
         MapDefinitionId = mapDefinitionId;
-        Blue = LobbySlot.Create(blueUserId, PlayerSide.Blue);
-        Red = LobbySlot.Create(redUserId, PlayerSide.Red);
+        Blue = PlayerSlot.Create(blueUserId, PlayerSide.Blue);
+        Red = PlayerSlot.Create(redUserId, PlayerSide.Red);
     }
 
     public static Lobby Create(
@@ -46,20 +46,17 @@ public sealed class Lobby : MatchEntity
         return new Lobby(blueUserId, redUserId, matchDefinitionId, mapDefinitionId);
     }
 
-    public LobbySlot GetSlot(UserId userId)
+    public PlayerSlot GetPlayerSlot(UserId userId)
     {
         if (Blue.UserId == userId) return Blue;
         if (Red.UserId == userId) return Red;
         
         throw new DomainException($"User {userId} is not in this lobby.");
     }
+
+    public void SubmitDeployment(UserId userId, List<DeploymentPlan> deploymentPlans) 
+        => GetPlayerSlot(userId).SubmitDeployment(deploymentPlans);
     
-    public void SelectRoster(UserId userId, IReadOnlyList<UnitDefinitionId> roster)
-        => GetSlot(userId).SelectRoster(roster);
-    
-    public void SetReady(UserId userId) 
-        => GetSlot(userId).SetReady();
-    
-    public void UnReady(UserId userId)
-        => GetSlot(userId).UnReady();
+    public void CancelDeployment(UserId userId)
+        => GetPlayerSlot(userId).CancelDeployment();
 }

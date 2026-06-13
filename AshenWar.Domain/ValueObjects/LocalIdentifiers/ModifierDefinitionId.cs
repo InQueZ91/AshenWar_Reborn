@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.LocalIdentifiers;
+namespace AshenWar.Domain.ValueObjects.LocalIdentifiers;
 
 public record ModifierDefinitionId(Guid Value) : LocalId<ModifierDefinitionId>(Value)
 {

@@ -1,24 +1,26 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
+using AshenWar.Domain.Entities.Tiles;
+using AshenWar.Domain.Entities.Units;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Interfaces.Match;
+namespace AshenWar.Domain.Interfaces.Match;
 
-public interface IBoard
+public interface IBoard : IReadOnlyBoard
 {
-    // Tile queries
-    ITile GetTile(HexCoord position);
+    // Tile Management
     IEnumerable<ITile> GetAllTiles();
-    bool TryGetTile(HexCoord position, out ITile tile);
-    IEnumerable<ITile> GetNeighborsTiles(HexCoord position);
+    ITile GetTileById(TileId tileId);
+    ITile? FindTileById(TileId tileId);
+    void PlaceTile(Tile tile, HexCoord position); 
+    void RemoveTile(ITile tile);
     
-    // Unit queries
-    IUnit? GetUnitAt(HexCoord position);
+    // Unit Management
     IEnumerable<IUnit> GetAllUnits();
-    
-    // Targetable queries - used by shapes
-    IEnumerable<ITargetable> GetAll();
-    IEnumerable<ITargetable> GetAt(HexCoord position);
-    IEnumerable<ITargetable> GetInRange(HexCoord origin, int range);
-    IEnumerable<ITargetable> GetInCone(HexCoord origin, HexCoord target, int range);
+    IUnit GetUnitById(UnitId unitId);
+    IUnit? FindUnitById(UnitId id);
+    void PlaceUnit(Unit unit, HexCoord position);
+    void RemoveUnit(IUnit unit);
 }

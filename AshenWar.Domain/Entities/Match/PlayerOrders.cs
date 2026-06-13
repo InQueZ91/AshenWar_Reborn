@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Orders;
 
-namespace Domain.Entities.Match;
+namespace AshenWar.Domain.Entities.Match;
 
 public sealed class PlayerOrders
 {

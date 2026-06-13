@@ -1,110 +1,164 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Abilities.Active;
-using Domain.Entities.Abilities.Passive;
-using Domain.Entities.Conditions;
-using Domain.Entities.Conditions.Unit;
-using Domain.Entities.Modifiers;
-using Domain.Entities.Stats;
-using Domain.Enums.Conditions;
-using Domain.Events.Units;
-using Domain.Exceptions;
-using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Abilities;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Units;
-using Domain.ValueObjects.LocalIdentifiers.Abilities;
-using Domain.ValueObjects.LocalIdentifiers.Conditions;
+using AshenWar.Domain.Entities.Abilities;
+using AshenWar.Domain.Entities.Abilities.Passives;
+using AshenWar.Domain.Entities.Conditions;
+using AshenWar.Domain.Entities.Conditions.Unit;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Entities.Stats;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.Events.Units;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Abilities;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Abilities;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers.Conditions;
 
-namespace Domain.Entities.Units;
+namespace AshenWar.Domain.Entities.Units;
 
-public sealed class Unit : MatchEntity, IUnitCommand
+public sealed class Unit : DomainEntity, IUnit
 {
     private readonly List<UnitCondition> _conditions = [];
-    private readonly List<ActiveAbility> _activeAbilities = [];
-    private readonly List<PassiveAbility> _passiveAbilities = [];
+    private readonly List<Ability> _abilities = [];
+    private readonly List<Passive> _passives = [];
 
     // Identity
-    public UnitId Id { get; } = UnitId.New();
+    public UnitId Id { get; }
     public UserId Owner { get; }
     public UnitDefinition Definition { get; }
+    public UnitDefinitionId DefinitionId => Definition.Id;
+    public StatBlock Stats => Definition.BaseStats;
+    public string Name => Definition.Name;
+    public IReadOnlySet<EntityTag> Tags => Definition.Tags;
     
     // Position
     public HexCoord? Position { get; private set; }
     
-    // State
-    public bool IsAlive {get; private set;} = true;
-
     // Runtime resources (current values, not max - max is always GetStat())
     public int CurrentHealth { get; private set; }
     public int CurrentStamina { get; private set; }
     public int CurrentSteps { get; private set; }
+    public bool IsAlive => CurrentHealth >= 0;
     
     // Convenience
-    public StatBlock BaseStats => Definition.BaseStats;
     public IReadOnlyList<UnitCondition> Conditions => _conditions.AsReadOnly();
-    public IReadOnlyList<PassiveAbility> PassiveAbilities => _passiveAbilities.AsReadOnly();
-    public IReadOnlyList<ActiveAbility> ActiveAbilities => _activeAbilities.AsReadOnly();
+    public IReadOnlyList<Passive> Passives => _passives.AsReadOnly();
+    public IReadOnlyList<Ability> Abilities => _abilities.AsReadOnly();
     
     // Constructor
-    private Unit(UserId owner, UnitDefinition definition)
+    // For instantiation, use Instantiate()
+    private Unit(UnitId id, UserId owner, UnitDefinition definition)
     {
+        Id = id;
         Owner = owner;
         Definition = definition;
-        
-        CurrentHealth = GetMaxStat(StatDefinition.Health);
-        CurrentStamina = GetMaxStat(StatDefinition.Stamina);
-        CurrentSteps = GetMaxStat(StatDefinition.Steps);
+        CurrentHealth = GetFinalStat(StatDefinition.Health);
+        CurrentStamina = GetFinalStat(StatDefinition.Stamina);
+        CurrentSteps = GetFinalStat(StatDefinition.Steps);
     }
+
+    // For rehydration, use Rehydrate()
+    private Unit(UnitId id,
+        UserId owner,
+        UnitDefinition definition,
+        HexCoord? position,
+        int health,
+        int stamina,
+        int steps)
+    {
+        Id = id;
+        Owner = owner;
+        Definition = definition;
+        Position = position;
+        CurrentHealth = health;
+        CurrentStamina = stamina;
+        CurrentSteps = steps;
+    }
+
     public static Unit Instantiate(UserId owner, UnitDefinition definition)
     {
-        return new Unit(owner, definition);
+        ArgumentNullException.ThrowIfNull(owner);
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        return new Unit(UnitId.New(), owner, definition);
+    }
+
+    public static Unit Rehydrate(
+        UnitId id,
+        UserId owner,
+        UnitDefinition definition,
+        HexCoord? position,
+        int health,
+        int stamina,
+        int steps,
+        IEnumerable<UnitCondition> unitConditions,
+        IEnumerable<Ability> abilities,
+        IEnumerable<Passive> passives)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(owner);
+        ArgumentNullException.ThrowIfNull(definition);
+        
+        if (health < 0) throw new DomainException("Unit health cannot be negative.");
+        if (stamina < 0) throw new DomainException("Unit stamina cannot be negative.");
+        if (steps < 0) throw new DomainException("Unit steps cannot be negative.");
+        
+        var unit = new Unit(id, owner, definition, position, health, stamina, steps);
+        
+        // Rehydrate conditions, abilities, and passives - bypass add/apply logic
+        unit._conditions.AddRange(unitConditions);
+        unit._abilities.AddRange(abilities);
+        unit._passives.AddRange(passives);
+
+        return unit;
     }
     
     #region Abilities
 
     // IAbilityHolder
-    public ActiveAbility? GetActiveAbilityByDefinitionId(ActiveAbilityDefinitionId abilityDefinitionId)
+    public Ability? GetAbilityByDefinitionId(AbilityDefinitionId abilityDefinitionId)
     {
         ArgumentNullException.ThrowIfNull(abilityDefinitionId);
-        return _activeAbilities.FirstOrDefault(a => a.Definition.Id == abilityDefinitionId);
+        return _abilities.FirstOrDefault(a => a.Definition.Id == abilityDefinitionId);
     }
-    public ActiveAbility? GetActiveAbilityById(ActiveAbilityId abilityId)
+    public Ability? GetAbilityById(AbilityId abilityId)
     {
         ArgumentNullException.ThrowIfNull(abilityId);
-        return _activeAbilities.FirstOrDefault(a => a.Id == abilityId);
+        return _abilities.FirstOrDefault(a => a.Id == abilityId);
     }
-    public PassiveAbility? GetPassiveByDefinitionId(PassiveAbilityDefinitionId abilityDefinitionId)
+    public Passive? GetPassiveByDefinitionId(PassiveDefinitionId definitionId)
     {
-        if (abilityDefinitionId == null) throw new ArgumentNullException(nameof(abilityDefinitionId));
-        return _passiveAbilities.FirstOrDefault(p => p.Definition.Id == abilityDefinitionId);
+        if (definitionId == null) throw new ArgumentNullException(nameof(definitionId));
+        return _passives.FirstOrDefault(p => p.Definition.Id == definitionId);
     }
     
     // IAbilityCommand
-    public void AddPassive(PassiveAbility passive)
+    public void AddPassive(Passive passive)
     {
-        _passiveAbilities.Add(passive);
+        _passives.Add(passive);
     }
-    public void RemovePassive(PassiveAbilityId id)
+    public void RemovePassive(PassiveId id)
     {
-        _passiveAbilities.RemoveAll(p => p.Id == id);
+        _passives.RemoveAll(p => p.Id == id);
     }
-    public void AddActiveAbility(ActiveAbility active)
+    public void AddAbility(Ability active)
     {
-        _activeAbilities.Add(active);
+        _abilities.Add(active);
     }
-    public void RemoveActiveAbility(ActiveAbilityId id)
+    public void RemoveAbility(AbilityId id)
     {
-        _activeAbilities.RemoveAll(a => a.Id == id);
+        _abilities.RemoveAll(a => a.Id == id);
     }
 
     #endregion
 
     #region Conditions
 
-    // IConditionHolder
+    // IHasConditions
     public UnitCondition? GetConditionById(ConditionId id)
     {
         return _conditions.FirstOrDefault(s => s.Id == id);
@@ -118,7 +172,7 @@ public sealed class Unit : MatchEntity, IUnitCommand
         return _conditions.Any(c => c.Definition.ConditionTags.Overlaps(conditionTags));
     }
 
-    // IConditionCommand
+    // ICondition
     public void ApplyCondition(UnitCondition incoming)
     {
         var existing = _conditions.FirstOrDefault(s => s.Definition.Id == incoming.Definition.Id);
@@ -138,7 +192,6 @@ public sealed class Unit : MatchEntity, IUnitCommand
         RemoveCondition(effect);
     }
     
-    // IConditionTarget
     private void AddCondition(ConditionBase condition)
     {
         if (condition is not UnitCondition incoming)
@@ -172,10 +225,6 @@ public sealed class Unit : MatchEntity, IUnitCommand
 
     #endregion
 
-    // IStatHolder
-    public int GetMaxStat(StatDefinition stat) 
-        => ModifierCalculator.Calculate(BaseStats.Get(stat), _conditions, stat.Id, Definition.Tags);
-
     #region Resources
 
     public void TakeDamage(int amount)
@@ -192,7 +241,7 @@ public sealed class Unit : MatchEntity, IUnitCommand
     {
         if (!IsAlive) return;
 
-        CurrentHealth = Math.Min(CurrentHealth + amount, GetMaxStat(StatDefinition.Health));
+        CurrentHealth = Math.Min(CurrentHealth + amount, GetFinalStat(StatDefinition.Health));
         RaiseDomainEvent(new UnitHealed(Id, amount, CurrentHealth));
     }
     private void Die()
@@ -200,23 +249,28 @@ public sealed class Unit : MatchEntity, IUnitCommand
         if (Position is null)
             throw new DomainException("Unit cannot die without a position.");
         
-        IsAlive = false;
         RaiseDomainEvent(new UnitDied(Id, Position));
     }
 
     public void OperateStamina(int delta)
     {
-        CurrentStamina = Math.Clamp(CurrentStamina + delta, 0, GetMaxStat(StatDefinition.Stamina));
+        CurrentStamina = Math.Clamp(CurrentStamina + delta, 0, GetFinalStat(StatDefinition.Stamina));
         RaiseDomainEvent(new UnitStaminaChanged(Id, delta, CurrentStamina));
     }
     public void OperateSteps(int delta)
     {
-        CurrentSteps = Math.Clamp(CurrentSteps + delta, 0, GetMaxStat(StatDefinition.Steps));
+        CurrentSteps = Math.Clamp(CurrentSteps + delta, 0, GetFinalStat(StatDefinition.Steps));
         RaiseDomainEvent(new UnitStepsChanged(Id, delta, CurrentSteps));
     }
 
     #endregion
-    
-    internal void SetPosition(HexCoord position) => Position = position;
-    internal void ClearPosition() => Position = null; // on Remove Unit
+
+    // IHasStats
+    public int GetFinalStat(StatDefinition stat)
+    {
+        return ModifierCalculator.Calculate(Stats.Get(stat), stat, _conditions, Tags);
+    }
+
+    internal void PlacedAt(HexCoord position) => Position = position;
+    internal void Removed() => Position = null;
 }

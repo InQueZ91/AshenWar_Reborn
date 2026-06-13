@@ -1,32 +1,37 @@
-﻿using System.Collections.Generic;
-using Domain.ValueObjects.Identifiers;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-namespace Domain.Entities.Stats;
+namespace AshenWar.Domain.Entities.Stats;
 
-public sealed class StatBlock
+public abstract class StatBlock
 {
-    private readonly Dictionary<StatDefinitionId, float> _values;
-
-    private StatBlock(Dictionary<StatDefinitionId, float> values)
-    {
-        _values = values;
-    }
+    private readonly Dictionary<StatDefinition, int> _values;
+    private readonly IReadOnlySet<StatDefinition> _validStats;
+    private readonly Dictionary<StatDefinition, int> _defaults;
     
-    public static StatBlock Empty => new (new Dictionary<StatDefinitionId, float>());
-
-    public float Get(StatDefinition stat)
+    protected StatBlock(
+        Dictionary<StatDefinition, int> values,
+        IReadOnlySet<StatDefinition> validStats,
+        Dictionary<StatDefinition, int> defaults)
     {
-        return _values.TryGetValue(stat.Id, out var value)
-            ? value
-            : stat.DefaultValue;
+        var invalid = values.Keys.Except(validStats).ToList();
+        if (invalid.Count != 0)
+            throw new ArgumentException(
+                $"Invalid stats: {string.Join(", ", invalid.Select(s => s.Name))}");
+
+        _values = values;
+        _validStats = validStats;
+        _defaults = defaults;
     }
 
-    public StatBlock With(StatDefinition stat, float value)
+    private int GetDefault(StatDefinition stat) => _defaults.GetValueOrDefault(stat, 0);
+
+    public int Get(StatDefinition stat)
     {
-        var copy = new Dictionary<StatDefinitionId, float>(_values)
-        {
-            [stat.Id] = value
-        };
-        return new StatBlock(copy);
+        if (!_validStats.Contains(stat))
+            throw new ArgumentException($"Stat '{stat.Name}' is not valid for {GetType().Name}");
+
+        return _values.TryGetValue(stat, out var value) ? value : GetDefault(stat);
     }
 }

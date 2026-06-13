@@ -1,4 +1,4 @@
-﻿namespace Domain.Enums.Effects;
+﻿namespace AshenWar.Domain.Enums.Effects;
 
 public enum StatusEffectTrigger
 {

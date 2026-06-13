@@ -1,6 +1,6 @@
-﻿using Domain.Interfaces;
-using Domain.ValueObjects.Identifiers.Conditions;
+﻿using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
 
-namespace Domain.Events.Match;
+namespace AshenWar.Domain.Events.Match;
 
 public record GlobalConditionApplied(GlobalConditionDefinitionId GlobalConditionDefinitionId) : IDomainEvent;

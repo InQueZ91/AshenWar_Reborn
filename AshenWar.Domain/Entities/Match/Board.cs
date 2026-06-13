@@ -1,151 +1,187 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Domain.Entities.Tiles;
-using Domain.Entities.Units;
-using Domain.Exceptions;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
+using AshenWar.Domain.Entities.Tiles;
+using AshenWar.Domain.Entities.Units;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Match;
+namespace AshenWar.Domain.Entities.Match;
 
-public sealed class Board : IBoardCommand
+public sealed class Board : IBoard
 {
-    // Fast lookup
-    private readonly Dictionary<HexCoord, Tile> _tiles = new(); 
-    private readonly Dictionary<HexCoord, Unit> _units = new();
+    private readonly List<Unit> _units = [];
+    private readonly List<Tile> _tiles = [];
     
     // Tile queries
-    public ITile GetTile(HexCoord position)
+    public IReadOnlyTile GetTileAt(HexCoord position)
     {
-        return _tiles.TryGetValue(position, out var tile) ? tile : throw new DomainException($"No tile at {position}");
+        return _tiles.FirstOrDefault(t => t.Position == position) ?? throw new DomainException($"No tile at {position}");
     }
-    public IEnumerable<ITile> GetAllTiles()
+    public ITile GetTileById(TileId tileId)
     {
-        return _tiles.Values;
+        return _tiles.FirstOrDefault(t => t.Id == tileId) 
+               ?? throw new DomainException($"No tile with id {tileId}");
     }
-    public bool TryGetTile(HexCoord position, out ITile tile)
+    public ITile? FindTileById(TileId tileId)
     {
-        var found = _tiles.TryGetValue(position, out var t);
-        tile = t!;
-        return found;
+        return _tiles.FirstOrDefault(t => t.Id == tileId);
     }
-    public IEnumerable<ITile> GetNeighborsTiles(HexCoord position)
+    public IEnumerable<ITile> GetAllTiles() => _tiles;
+    public IEnumerable<IReadOnlyTile> GetNeighborsTiles(HexCoord position)
     {
-        return position.Neighbors()
-            .Where(n => _tiles.ContainsKey(n))
-            .Select(n => _tiles[n]);
+        var neighbors = position.Neighbors();
+        return _tiles.Where(t => t.Position is { } pos && neighbors.Contains(pos));
     }
 
     // Unit queries
-    public IUnit? GetUnitAt(HexCoord position)
+    public IReadOnlyUnit GetUnitAt(HexCoord position)
     {
-        return _units.GetValueOrDefault(position);
+        return _units.FirstOrDefault(u => u.Position == position) ??
+               throw new DomainException($"No unit at {position}");
     }
-    public IEnumerable<IUnit> GetAllUnits()
+    public IUnit GetUnitById(UnitId unitId)
     {
-        return _units.Values;
+        return _units.FirstOrDefault(u => u.Id == unitId) 
+               ?? throw new DomainException($"No unit with id {unitId}");
     }
+    public IUnit? FindUnitById(UnitId unitId)
+    {
+        return _units.FirstOrDefault(u => u.Id == unitId);
+    }
+    public IEnumerable<IUnit> GetAllUnits() => _units;
+    public IEnumerable<IReadOnlyUnit> GetUnitsForPlayer(UserId userId) => _units.Where(u => u.Owner == userId).ToList();
 
     // Targetable queries
-    public IEnumerable<ITargetable> GetAll()
-    {
-        return _units.Values.Cast<ITargetable>().Concat(_tiles.Values);
-    }
+    public IEnumerable<ITargetable> GetAll() => _units.Concat<ITargetable>(_tiles);
     public IEnumerable<ITargetable> GetAt(HexCoord position)
     {
-        if (_tiles.TryGetValue(position, out var tile)) yield return tile;
-        if (_units.TryGetValue(position, out var unit)) yield return unit;
+        var tile = _tiles.FirstOrDefault(t => t.Position == position);
+        if (tile is not null) yield return tile;
+
+        var unit = _units.FirstOrDefault(u => u.Position == position);
+        if (unit is not null) yield return unit;
     }
     public IEnumerable<ITargetable> GetInRange(HexCoord origin, int range)
     {
-        return _tiles.Keys
-            .Where(pos => pos.DistanceTo(origin) <= range)
-            .SelectMany(GetAt);
+        var tilesInRange = _tiles
+            .Where(t => t.Position is { } pos && pos.DistanceTo(origin) <= range);
+    
+        var unitsInRange = _units
+            .Where(u => u.Position is { } pos && pos.DistanceTo(origin) <= range);
+    
+        return tilesInRange.Concat<ITargetable>(unitsInRange);
     }
     public IEnumerable<ITargetable> GetInCone(HexCoord origin, HexCoord direction, int range)
     {
         // direction is the pointed-at position
         // we find all tiles within range whose angle from origin aligns with the direction vector
+        
         var dir = direction - origin;
-        return _tiles.Keys
-            .Where(pos =>
-            {
-                var vec = pos - origin;
-                var dist = pos.DistanceTo(origin);
-                if (dist == 0 || dist > range) return false;
-                // dot product in cube coords - same direction if cross is zero and dot is positive
-                return vec.Q * dir.R - vec.R * dir.Q == 0 &&
-                       vec.Q * dir.Q + vec.R * dir.R > 0;
-            })
-            .SelectMany(GetAt);
+
+        var tilesInCone = _tiles.Where(t => InCone(t.Position));
+        var unitsInCone = _units.Where(u => InCone(u.Position));
+        
+        return tilesInCone.Concat<ITargetable>(unitsInCone);
+
+        bool InCone(HexCoord? position)
+        {
+            if (position is null) return false;
+            var vec = position - origin;
+            var dist = position.DistanceTo(origin);
+            if (dist == 0 || dist > range) return false;
+            return vec.Q * dir.R - vec.R * dir.Q == 0 &&
+                   vec.Q * dir.Q + vec.R * dir.R > 0;
+        }
     }
     
     // Mutation
     public void PlaceTile(Tile tile, HexCoord position)
     {
-        // Validation
-        // Does the position have a tile?
-        if (_tiles.ContainsKey(position))
+        // Does position already have tile?
+        if (_tiles.FirstOrDefault(t => t.Position == position) is not null)
             throw new DomainException($"Tile already exists at {position}");
         
-        // Does the position have a unit?
-        if (_units.ContainsKey(position))
-            throw new DomainException($"Unit exists at {position}");
+        // Does position already have unit?
+        if (_units.FirstOrDefault(u => u.Position == position) is not null)
+            throw new DomainException($"Unit already exists at {position}");
         
-        // Place tile
-        if (!_tiles.TryAdd(position, tile))
-            throw new DomainException($"Tile already exists at {position}");
+        // Does tile already have a position?
+        if (tile.Position is not null)
+            throw new DomainException($"Tile {tile.Id} already has a position {tile.Position}");
+
+        tile.PlacedAt(position);
+        _tiles.Add(tile);
     }
-    public Unit? RemoveTile(Tile tile)
+    public void RemoveTile(ITile tile)
     {
-        if (!_tiles.ContainsValue(tile))
+        if (!_tiles.Contains(tile))
             throw new DomainException($"Tile {tile.Id} does not exist");
         
         if (tile.Position is not { } tilePos)
             throw new DomainException($"Tile {tile.Id} has no position");
         
-        // Remove unit from tile
-        _units.Remove(tilePos, out var unit);
+        var unit = _units.FirstOrDefault(u => u.Position == tilePos);
+        if (unit is not null)
+        {
+            _units.Remove(unit);
+            unit.Removed();
+        }
         
-        // Remove tile from board
-        _tiles.Remove(tilePos);
+        var tileToRemove = _tiles.FirstOrDefault(t => t.Id == tile.Id);
+        if (tileToRemove is null)
+            throw new DomainException($"Tile {tile.Id} is not in the board");
         
-        return unit;
+        tileToRemove.Removed();
+        _tiles.Remove(tileToRemove);
     }
     
     public void PlaceUnit(Unit unit, HexCoord position)
     {
-        if (!_tiles.TryGetValue(position, out var newTile))
-            throw new DomainException($"No tile at {position}");
-
-        if (_units.ContainsKey(position))
+        var newTile = _tiles.FirstOrDefault(t => t.Position == position)
+            ?? throw new DomainException($"No tile at {position}");
+        
+        if (_units.Any(u => u.Position == position))
             throw new DomainException($"Position {position} is already occupied");
 
         if (unit.Position is { } oldPos)
         {
-            _units.Remove(oldPos);
-            if (_tiles.TryGetValue(oldPos, out var oldTile))
-                oldTile.SetOccupied(false);
+            var oldTile = _tiles.FirstOrDefault(t => t.Position == oldPos);
+            oldTile?.Release();
         }
 
-        unit.SetPosition(position);
-        _units[position] = unit;
-        newTile.SetOccupied(true);
+        unit.PlacedAt(position);
+        _units.Add(unit);
+        newTile.Claim();
     }
-    public void RemoveUnit(Unit unit)
+    public void RemoveUnit(IUnit unit)
     {
-        if (!_units.ContainsValue(unit))
+        if (!_units.Contains(unit))
             throw new DomainException($"Unit {unit.Id} does not exist");
         
         if (unit.Position is not { } pos)
             throw new DomainException($"Unit {unit.Id} has no position");
         
-        _units.Remove(pos);
-            
-        if (_tiles.TryGetValue(pos, out var tile)) 
-            tile.SetOccupied(false);
-            
-        unit.ClearPosition();
+        var tile = _tiles.FirstOrDefault(t => t.Position == pos);
+        tile?.Release();
+        
+        var unitToRemove = _units.FirstOrDefault(u => u.Id == unit.Id);
+        if (unitToRemove is null)
+            throw new DomainException($"Unit {unit.Id} is not in the board");
+        
+        _units.Remove(unitToRemove);
+        unitToRemove.Removed();
+    }
+
+    internal Board Rehydrate(IEnumerable<Unit> units, IEnumerable<Tile> tiles)
+    {
+        _units.AddRange(units);
+        _tiles.AddRange(tiles);
+
+        return this;
     }
 }

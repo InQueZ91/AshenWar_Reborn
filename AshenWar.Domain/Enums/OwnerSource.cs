@@ -1,4 +1,4 @@
-﻿namespace Domain.Enums;
+﻿namespace AshenWar.Domain.Enums;
 
 public enum OwnerSource
 {

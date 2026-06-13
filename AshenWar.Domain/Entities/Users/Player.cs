@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Enums;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.Enums;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Users;
+namespace AshenWar.Domain.Entities.Users;
 
 public sealed class Player
 {
@@ -20,7 +20,7 @@ public sealed class Player
         Side = side;
         _roster.AddRange(roster);
     }
-    public static Player Instantiate(UserId userId, PlayerSide side, IReadOnlyList<UnitDefinitionId> roster)
+    public static Player Create(UserId userId, PlayerSide side, IReadOnlyList<UnitDefinitionId> roster)
     {
         ArgumentNullException.ThrowIfNull(userId);
         ArgumentNullException.ThrowIfNull(roster);
@@ -29,4 +29,5 @@ public sealed class Player
         
         return new Player(userId, side, roster);
     }
+    
 }

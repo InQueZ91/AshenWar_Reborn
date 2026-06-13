@@ -1,7 +1,7 @@
-﻿using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
+﻿using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Match;
+namespace AshenWar.Domain.Entities.Match;
 
 /// <summary>
 /// Sentinel source for actions initiated by the world-global events,

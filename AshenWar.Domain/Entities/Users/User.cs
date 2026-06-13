@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Users;
+namespace AshenWar.Domain.Entities.Users;
 
 public sealed class User
 {
@@ -12,7 +12,7 @@ public sealed class User
     public UserId Id { get; private set; }
     public string Username { get; private set;}
     public string Email { get; private set; }
-    public string? PasswordHash {get; private set;} // null = OAuth user (future)
+    public string? PasswordHash {get; private init;} // null = OAuth user (future)
     public string? GoogleId {get; private set;} // null = not linked (future)
     public string Role { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -21,7 +21,15 @@ public sealed class User
     
     // Constructor
     private User() { } // EF Core
-    
+    private User(string username, string email, string? passwordHash, string role, DateTimeOffset createdAt)
+    {
+        Id = UserId.New();
+        Username = username;
+        Email = email.ToLowerInvariant();
+        PasswordHash = passwordHash;
+        Role = role;
+        CreatedAt = createdAt;
+    }
     public static User Create(string username, string email, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(username))
@@ -31,15 +39,7 @@ public sealed class User
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new ArgumentException("Password hash cannot be empty.", nameof(passwordHash));
 
-        return new User
-        {
-            Id = UserId.New(),
-            Username = username,
-            Email = email.ToLowerInvariant(),
-            PasswordHash = passwordHash,
-            Role = UserRoles.Player,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
+        return new User(username, email, passwordHash, UserRoles.Player, DateTimeOffset.UtcNow);
     }
     
     // Unit collection

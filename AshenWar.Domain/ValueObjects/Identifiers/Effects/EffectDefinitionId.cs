@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Effects;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Effects;
 
 public record EffectDefinitionId(Guid Value) : Id<EffectDefinitionId>(Value)
 {

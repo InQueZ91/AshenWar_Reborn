@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Actions;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Actions;
 
-namespace Domain.Entities.Conditions;
+namespace AshenWar.Domain.Entities.Conditions;
 
 public sealed class ConditionEffect
 {

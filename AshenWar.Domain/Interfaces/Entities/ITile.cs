@@ -1,16 +1,12 @@
-﻿using Domain.Entities.Conditions.Tile;
-using Domain.Entities.Tiles;
-using Domain.Interfaces.Abilities.Passive;
-using Domain.Interfaces.Conditions;
-using Domain.ValueObjects.Identifiers.Tiles;
+﻿using AshenWar.Domain.Entities.Conditions.Tile;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Domain.Interfaces.Entities;
+namespace AshenWar.Domain.Interfaces.Entities;
 
-public interface ITile : ITargetable, IStatHolder, IConditionHolder<TileCondition>, IPassiveAbilityHolder
+public interface ITile : IReadOnlyTile, ICondition<TileCondition>, IPassive
 {
-    TileId Id { get; }
-    bool IsOccupied { get; }
-    bool HasFog { get; }
-    bool IsDestroyed { get; }
-    TileDefinition Definition { get; }
+    void AddFog();
+    void RemoveFog();
+    void Destroy();
 }

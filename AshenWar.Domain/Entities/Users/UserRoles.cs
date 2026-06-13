@@ -1,4 +1,4 @@
-﻿namespace Domain.Entities.Users;
+﻿namespace AshenWar.Domain.Entities.Users;
 
 public sealed class UserRoles
 {

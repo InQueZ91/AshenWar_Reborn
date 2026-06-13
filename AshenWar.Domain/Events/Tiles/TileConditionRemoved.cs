@@ -1,7 +1,7 @@
-﻿using Domain.Interfaces;
-using Domain.ValueObjects.Identifiers.Conditions;
-using Domain.ValueObjects.Identifiers.Tiles;
+﻿using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
+using AshenWar.Domain.ValueObjects.Identifiers.Tiles;
 
-namespace Domain.Events.Tiles;
+namespace AshenWar.Domain.Events.Tiles;
 
 public record TileConditionRemoved(TileId TileId, TileConditionDefinitionId TileConditionDefinitionId) : IDomainEvent;

@@ -1,40 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
-using Domain.Entities.Modifiers;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects.Identifiers.Conditions;
-using Domain.ValueObjects.LocalIdentifiers;
+using AshenWar.Domain.Entities.Modifiers;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
+using AshenWar.Domain.ValueObjects.LocalIdentifiers;
 
-namespace Domain.Entities.Conditions.Unit;
+namespace AshenWar.Domain.Entities.Conditions.Unit;
 
-public sealed class UnitConditionDefinition(string name) : ConditionDefinitionBase(name)
+public sealed class UnitConditionDefinition : ConditionDefinitionBase
 {
-    private readonly List<ModifierDefinition> _modifierDefinitions = [];
+    private readonly List<Modifier> _modifiers = [];
+
+    public UnitConditionDefinitionId Id { get; }
     
-    public UnitConditionDefinitionId Id { get; } = UnitConditionDefinitionId.New();
-    
-    public IReadOnlyList<ModifierDefinition> ModifierDefinitions => _modifierDefinitions;
+    public IReadOnlyList<Modifier> Modifiers => _modifiers;
     
     // Constructor
+    private UnitConditionDefinition(UnitConditionDefinitionId id, string name) : base(name) => Id = id;
     public static UnitConditionDefinition Create(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Condition name cannot be empty.", nameof(name));
             
-        return new UnitConditionDefinition(name);
+        return new UnitConditionDefinition(UnitConditionDefinitionId.New(), name);
+    }
+    public static UnitConditionDefinition Load(UnitConditionDefinitionId id, string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Condition name cannot be empty.", nameof(name));   
+        
+        return new UnitConditionDefinition(id, name);
     }
 
-    public override IReadOnlyList<ITargetable> ResolveCandidates(ITargetable? holder, IBoard board) => [holder!];
+    public override IReadOnlyList<ITargetable> ResolveCandidates(ITargetable? holder, IReadOnlyBoard readOnlyBoard)
+        => holder is IReadOnlyUnit unit ? [unit] : [];
     
     // Modifier definitions
-    public void AddModifierDefinition(ModifierDefinition modifierDefinition)
+    public void AddModifier(Modifier modifier)
     {
-        _modifierDefinitions.Add(modifierDefinition);
+        _modifiers.Add(modifier);
     }
-    public void RemoveModifierDefinition(ModifierDefinitionId modifierDefinition)
+    public void RemoveModifier(ModifierDefinitionId modifierDefinition)
     {
-        _modifierDefinitions.RemoveAll(m => m.Id == modifierDefinition);
+        _modifiers.RemoveAll(m => m.Id == modifierDefinition);
     }
-    public void ClearModifierDefinitions() => _modifierDefinitions.Clear();
+    public void ClearModifiers() => _modifiers.Clear();
 }

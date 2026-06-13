@@ -1,34 +1,51 @@
 ﻿using System.Text.Json.Serialization;
-using Domain.Entities.Actions.Definitions.Ability;
-using Domain.Entities.Actions.Definitions.Board;
-using Domain.Entities.Actions.Definitions.Condition;
-using Domain.Entities.Actions.Definitions.Costs;
-using Domain.Entities.Actions.Definitions.Movement;
-using Domain.Entities.Actions.Definitions.Resource;
-using Domain.Entities.Actions.Definitions.Unit;
+using AshenWar.Domain.Entities.Actions.Definitions.Ability;
+using AshenWar.Domain.Entities.Actions.Definitions.Ability.Cooldown;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Domain.Entities.Actions.Definitions.Costs;
+using AshenWar.Domain.Entities.Actions.Definitions.Movement;
+using AshenWar.Domain.Entities.Actions.Definitions.Resource;
+using AshenWar.Domain.Entities.Actions.Definitions.Tile;
+using AshenWar.Domain.Entities.Actions.Definitions.Unit;
 
-namespace Domain.Interfaces.Actions;
+namespace AshenWar.Domain.Interfaces.Actions;
 
-/// <summary>
-/// Marker interface for all action blueprints.
-/// Embedded as owned JSON inside EffectDefinition — no own DB table, no ID.
-/// Handler registry in AshenWar.Application layer dispatches on concrete type.
-/// </summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(DealDamage),         "dealDamage")]
-[JsonDerivedType(typeof(Heal),               "heal")]
-[JsonDerivedType(typeof(Move),               "move")]
-[JsonDerivedType(typeof(OperateStamina),     "operateStamina")]
-[JsonDerivedType(typeof(OperateSteps),       "operateSteps")]
-[JsonDerivedType(typeof(ApplyUnitCondition),     "applyCondition")]
-[JsonDerivedType(typeof(RemoveUnitCondition),    "removeCondition")]
-[JsonDerivedType(typeof(SpawnUnit),          "spawnUnit")]
-[JsonDerivedType(typeof(StartAbilityCooldown),      "resetCooldown")]
-[JsonDerivedType(typeof(SetCooldown),        "setCooldown")]
-[JsonDerivedType(typeof(AddFog),             "addFog")]
-[JsonDerivedType(typeof(RemoveFog),          "removeFog")]
-[JsonDerivedType(typeof(DestroyTile),        "destroyTile")]
-[JsonDerivedType(typeof(SpendStamina),         "deductStamina")]
-[JsonDerivedType(typeof(SpendSteps),           "deductSteps")]
-[JsonDerivedType(typeof(SpendOverloadStacks),  "deductOverloadStacks")]
-public interface IActionDefinition {}
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(SpawnUnit), "SpawnUnit")]
+
+[JsonDerivedType(typeof(SpawnTile), "SpawnTile")]
+[JsonDerivedType(typeof(ApplyFog), "ApplyFog")]
+[JsonDerivedType(typeof(RemoveFog), "RemoveFog")]
+[JsonDerivedType(typeof(DestroyTile), "DestroyTile")]
+
+[JsonDerivedType(typeof(DealDamage), "DealDamage")]
+[JsonDerivedType(typeof(Heal), "Heal")]
+[JsonDerivedType(typeof(OperateStamina), "OperateStamina")]
+[JsonDerivedType(typeof(OperateSteps), "OperateSteps")]
+
+[JsonDerivedType(typeof(Move), "Move")]
+
+[JsonDerivedType(typeof(SpendStamina), "SpendStamina")]
+[JsonDerivedType(typeof(SpendSteps), "SpendSteps")]
+[JsonDerivedType(typeof(SpendOverloadStacks), "SpendOverloadStacks")]
+
+[JsonDerivedType(typeof(ApplyGlobalCondition), "ApplyGlobalCondition")]
+[JsonDerivedType(typeof(ApplyTileCondition), "ApplyTileCondition")]
+[JsonDerivedType(typeof(ApplyUnitCondition), "ApplyUnitCondition")]
+[JsonDerivedType(typeof(RemoveGlobalCondition), "RemoveGlobalCondition")]
+[JsonDerivedType(typeof(RemoveTileCondition), "RemoveTileCondition")]
+[JsonDerivedType(typeof(RemoveUnitCondition), "RemoveUnitCondition")]
+
+[JsonDerivedType(typeof(ReduceAbilityCooldown), "ReduceAbilityCooldown")]
+[JsonDerivedType(typeof(ReduceAllAbilitiesCooldown), "ReduceAllAbilitiesCooldown")]
+[JsonDerivedType(typeof(ResetAbilityCooldown), "ResetAbilityCooldown")]
+[JsonDerivedType(typeof(ResetAllAbilitiesCooldown), "ResetAllAbilitiesCooldown")]
+[JsonDerivedType(typeof(SetAbilityCooldown), "SetAbilityCooldown")]
+[JsonDerivedType(typeof(SetAllAbilitiesCooldown), "SetAllAbilitiesCooldown")]
+[JsonDerivedType(typeof(StartAbilityCooldown), "StartAbilityCooldown")]
+[JsonDerivedType(typeof(StartAllAbilitiesCooldown), "StartAllAbilitiesCooldown")]
+[JsonDerivedType(typeof(GrantActive), "GrantActive")]
+[JsonDerivedType(typeof(GrantPassive), "GrantPassive")]
+[JsonDerivedType(typeof(RemoveActive), "RemoveActive")]
+[JsonDerivedType(typeof(RemovePassive), "RemovePassive")]
+public interface IActionDefinition;

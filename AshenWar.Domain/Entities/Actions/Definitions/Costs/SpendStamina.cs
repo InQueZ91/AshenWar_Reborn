@@ -1,5 +1,5 @@
-﻿using Domain.Interfaces.Actions;
+﻿using AshenWar.Domain.Interfaces.Actions;
 
-namespace Domain.Entities.Actions.Definitions.Costs;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Costs;
 
-public record SpendStamina(int Amount) : ICostActionDefinition;
+public sealed record SpendStamina(int Amount) : ICostActionDefinition;

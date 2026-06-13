@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Domain.ValueObjects.Identifiers.Conditions;
+namespace AshenWar.Domain.ValueObjects.Identifiers.Conditions;
 
 public record UnitConditionDefinitionId(Guid Value) : Id<UnitConditionDefinitionId>(Value)
 {

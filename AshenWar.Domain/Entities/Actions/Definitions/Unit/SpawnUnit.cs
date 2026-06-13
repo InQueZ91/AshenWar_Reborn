@@ -1,17 +1,17 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using Domain.Enums;
-using Domain.Interfaces.Actions;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Players;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.Enums;
+using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Domain.Entities.Actions.Definitions.Unit;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Unit;
 
-public sealed class SpawnUnit : IActionDefinition
+public sealed record SpawnUnit : IActionDefinition
 {
     public UnitDefinitionId UnitDefinitionId { get; }
-    public OwnerSource OwnerSource { get; }
+    public OwnerSource OwnerSource { get; } 
     public UserId? ExplicitOwner { get; }
     public PositionSource PositionSource { get; }
     public HexCoord? ExplicitPosition { get; }
@@ -36,7 +36,7 @@ public sealed class SpawnUnit : IActionDefinition
         ExplicitPosition = explicitPosition;
     }
     
-    // Factory methods
+    // --- Factory methods ---
     
     // Caster owns the spawned unit, spawns at caster position
     public static SpawnUnit AtCaster(UnitDefinitionId unitDefinitionId)

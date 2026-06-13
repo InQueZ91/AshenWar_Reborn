@@ -1,8 +1,7 @@
-﻿using Domain.Interfaces;
-using Domain.ValueObjects.Identifiers;
-using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Players;
+﻿using AshenWar.Domain.Interfaces;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
 
-namespace Domain.Events.Match;
+namespace AshenWar.Domain.Events.Match;
 
 public sealed record MatchEnded(MatchId MatchId, UserId? WinnerPlayerId) : IDomainEvent; // null if draw

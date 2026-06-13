@@ -1,16 +1,20 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces.Abilities;
-using Domain.Interfaces.Entities;
-using Domain.Interfaces.Match;
-using Domain.ValueObjects;
+using AshenWar.Domain.Exceptions;
+using AshenWar.Domain.Interfaces.Abilities;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.Interfaces.Match;
+using AshenWar.Domain.ValueObjects;
 
-namespace Domain.Entities.Abilities.TargetShapes;
+namespace AshenWar.Domain.Entities.Abilities.TargetShapes;
 
-public class Circle(int radius) : ITargetShape
+public sealed record Circle(int Radius) : ITargetShape
 {
     public bool RequiresInput => true;
-    public int Radius { get; } = radius;
-
-    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IBoard board)
-        => board.GetInRange(input.Position, Radius);
+    public IEnumerable<ITargetable> Resolve(HexCoord origin, ITargetable input, IReadOnlyBoard readOnlyBoard)
+    {
+        if (input.Position is null)
+            throw new DomainException($"No input position for {input} to resolve circle");
+        
+        return readOnlyBoard.GetInRange(input.Position, Radius);
+    }
 }

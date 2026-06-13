@@ -1,9 +1,6 @@
-﻿using Domain.Interfaces.Actions;
-using Domain.ValueObjects.Identifiers.Conditions;
+﻿using AshenWar.Domain.Interfaces.Actions;
+using AshenWar.Domain.ValueObjects.Identifiers.Conditions;
 
-namespace Domain.Entities.Actions.Definitions.Condition;
+namespace AshenWar.Domain.Entities.Actions.Definitions.Condition;
 
-public sealed class RemoveUnitCondition : IActionDefinition
-{
-    public UnitConditionDefinitionId UnitConditionDefinitionId { get; init; } = null!;
-}
+public sealed record RemoveUnitCondition(UnitConditionDefinitionId UnitConditionDefinitionId) : IActionDefinition;
