@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using Domain.Interfaces;
+using AshenWar.Domain.Interfaces;
 
-namespace Application.ValueObjects;
+namespace AshenWar.Application.ValueObjects;
 
-public sealed record ResolutionTick(int TickNumber, IReadOnlyList<IDomainEvent> RecordedEvents);
+public sealed record ResolutionTick(int TickNumber, IReadOnlyList<ResolutionEvent> Events);

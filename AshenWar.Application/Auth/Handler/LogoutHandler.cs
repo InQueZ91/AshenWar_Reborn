@@ -1,15 +1,16 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Auth;
 using MediatR;
 
-namespace Application.Auth.Handler;
+namespace AshenWar.Application.Auth.Handler;
 
 public record LogoutRequest(string RefreshToken) : IRequest;
 
 public sealed class LogoutHandler(
     IRefreshTokenRepository refreshTokenRepository,
-    TokenService tokenService
+    ITokenService tokenService
     ) : IRequestHandler<LogoutRequest>
 {
     public async Task Handle(LogoutRequest request, CancellationToken cancellationToken)

@@ -1,12 +1,14 @@
-﻿using System;
-using Application.Interfaces;
-using Domain.Interfaces.Actions;
+﻿using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Interfaces.Actions;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Application.Execution;
+namespace AshenWar.Application.Execution;
 
-public sealed class ActionHandlerRegistry(IServiceProvider sp)
+public sealed class ActionHandlerRegistry(IServiceScopeFactory scopeFactory)
 {
-    public IActionHandler<T> Get<T>() where T : IActionDefinition
-        => sp.GetRequiredService<IActionHandler<T>>();
+    public (IActionHandler<T> Handler, IServiceScope Scope) Get<T>() where T : IActionDefinition
+    {
+        var scope = scopeFactory.CreateScope();
+        return (scope.ServiceProvider.GetRequiredService<IActionHandler<T>>(), scope);
+    }
 }

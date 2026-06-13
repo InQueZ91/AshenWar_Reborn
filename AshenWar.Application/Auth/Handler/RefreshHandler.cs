@@ -1,11 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.ValueObjects;
-using Domain.Exceptions;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Auth;
+using AshenWar.Domain.Exceptions;
 using MediatR;
 
-namespace Application.Auth.Handler;
+namespace AshenWar.Application.Auth.Handler;
 
 public record RefreshRequest(string RefreshToken) : IRequest<AuthResult>;
 
@@ -13,7 +13,7 @@ public sealed class RefreshHandler(
     IUserRepository userRepository,
     IRefreshTokenRepository refreshTokenRepository,
     AuthService authService,
-    TokenService tokenService) : IRequestHandler<RefreshRequest, AuthResult>
+    ITokenService tokenService) : IRequestHandler<RefreshRequest, AuthResult>
 {
     public async Task<AuthResult> Handle(RefreshRequest request, CancellationToken ct)
     {

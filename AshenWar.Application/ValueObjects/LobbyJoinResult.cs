@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects.Identifiers;
+﻿using AshenWar.Domain.ValueObjects.Identifiers;
 
-namespace Application.ValueObjects;
+namespace AshenWar.Application.ValueObjects;
 
 public sealed record LobbyJoinResult
 {

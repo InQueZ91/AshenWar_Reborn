@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Application.Constants;
+namespace AshenWar.Application.Constants;
 
 public static class PlanningConstants
 {

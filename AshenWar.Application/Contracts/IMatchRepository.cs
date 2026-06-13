@@ -1,13 +1,14 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using Domain.Entities.Match;
-using Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.Entities.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
 
-namespace Application.Contracts;
+namespace AshenWar.Application.Contracts;
 
 public interface IMatchRepository
 {
-    Task<Match?> GetMatchAsync(MatchId id, CancellationToken cancellationToken = default);
-    Task<Match?> GetActivePlanningMatchAsync(CancellationToken cancellationToken = default);
+    Task<Match?> FindAsync(MatchId id, CancellationToken cancellationToken = default);
+    Task<List<Match>> GetActivePlanningMatchesAsync(CancellationToken cancellationToken = default);
     Task SaveAsync(Match match, CancellationToken cancellationToken = default);
 }

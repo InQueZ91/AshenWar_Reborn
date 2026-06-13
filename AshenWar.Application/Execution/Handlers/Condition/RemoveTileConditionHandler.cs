@@ -1,13 +1,13 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Condition;
-using Domain.Entities.Conditions.Tile;
-using Domain.Interfaces.Conditions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Domain.Entities.Conditions.Tile;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Application.Execution.Handlers.Condition;
+namespace AshenWar.Application.Execution.Handlers.Condition;
 
 public sealed class RemoveTileConditionHandler : IActionHandler<RemoveTileCondition>
 {
@@ -18,7 +18,7 @@ public sealed class RemoveTileConditionHandler : IActionHandler<RemoveTileCondit
     {
         foreach (var target in context.Targets)
         {
-            if (target is not IConditionCommand<TileCondition> holder) continue;
+            if (target is not ICondition<TileCondition> holder) continue;
 
             var condition = holder.Conditions
                 .FirstOrDefault(c => c.Definition.Id == definition.TileConditionDefinitionId);

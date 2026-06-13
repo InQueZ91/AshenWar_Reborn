@@ -1,4 +1,4 @@
-﻿namespace Application.ValueObjects;
+﻿namespace AshenWar.Application.ValueObjects;
 
 public sealed record SubmitOrdersResult(bool Success, string? Error)
 {

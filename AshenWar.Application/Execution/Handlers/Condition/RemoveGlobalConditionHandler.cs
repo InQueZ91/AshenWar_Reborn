@@ -1,11 +1,11 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
 
-namespace Application.Execution.Handlers.Condition;
+namespace AshenWar.Application.Execution.Handlers.Condition;
 
 public sealed class RemoveGlobalConditionHandler : IActionHandler<RemoveGlobalCondition>
 {

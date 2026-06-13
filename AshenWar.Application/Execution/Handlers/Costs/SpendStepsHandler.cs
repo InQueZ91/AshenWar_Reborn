@@ -1,12 +1,12 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Costs;
-using Domain.Events;
-using Domain.Interfaces.Entities;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Costs;
+using AshenWar.Domain.Events;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Application.Execution.Handlers.Costs;
+namespace AshenWar.Application.Execution.Handlers.Costs;
 
 public sealed class SpendStepsHandler : IActionHandler<SpendSteps>
 {
@@ -15,7 +15,7 @@ public sealed class SpendStepsHandler : IActionHandler<SpendSteps>
         IDomainEventCollector collector,
         CancellationToken cancellationToken)
     {
-        if (context.Source is not IUnitCommand unit) return Task.CompletedTask;
+        if (context.Source is not IUnit unit) return Task.CompletedTask;
         
         unit.OperateSteps(-1 * definition.Amount); // negative = spend
         

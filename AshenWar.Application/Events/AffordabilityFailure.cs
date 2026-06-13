@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects;
+﻿using AshenWar.Domain.ValueObjects;
 
-namespace Application.Events;
+namespace AshenWar.Application.Events;
 
 public abstract record AffordabilityFailure;
 

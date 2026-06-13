@@ -1,16 +1,17 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.Interfaces;
-using Domain.Entities.Abilities.Passive;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Ability;
-using Domain.Interfaces.Abilities.Passive;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Definitions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Abilities.Passives;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Ability;
+using AshenWar.Domain.Interfaces.Abilities;
 
-namespace Application.Execution.Handlers.Ability;
+namespace AshenWar.Application.Execution.Handlers.Ability;
 
-public sealed class GrantPassiveHandler(IAbilityRepository abilityRepository) : IActionHandler<GrantPassive>
+public sealed class GrantPassiveHandler(IPassiveDefinitionRepository passiveDefinitionRepository) : IActionHandler<GrantPassive>
 {
     public async Task Execute(GrantPassive definition,
         ActionContext context,
@@ -18,16 +19,21 @@ public sealed class GrantPassiveHandler(IAbilityRepository abilityRepository) : 
         CancellationToken cancellationToken)
     {
         // Fetch definition
-        var passiveAbilityDefinition = await abilityRepository.GetPassiveAbilityAsync(
-            definition.PassiveAbilityDefinitionId,
+        var passiveAbilityDefinition = await passiveDefinitionRepository.FindPassiveAsync(
+            definition.PassiveDefinitionId,
             cancellationToken);
+
+        if (passiveAbilityDefinition is null)
+        {
+            return;
+        }
         
         // Instantiate passive
-        var passiveAbility = PassiveAbility.Instantiate(passiveAbilityDefinition);
+        var passiveAbility = Passive.Instantiate(passiveAbilityDefinition);
 
         // Add passive to holder
         var owner = context.Source;
-        if (owner is not IPassiveAbilityCommand holder)
+        if (owner is not IPassive holder)
         {
             return;
         }

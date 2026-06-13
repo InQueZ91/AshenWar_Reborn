@@ -1,4 +1,4 @@
-﻿namespace Application.Enums;
+﻿namespace AshenWar.Application.Enums;
 
 public enum RosterFailure
 {

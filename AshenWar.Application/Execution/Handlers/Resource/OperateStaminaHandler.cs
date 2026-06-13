@@ -1,12 +1,12 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Resource;
-using Domain.Interfaces.Entities;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Resource;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Application.Execution.Handlers.Resource;
+namespace AshenWar.Application.Execution.Handlers.Resource;
 
 public sealed class OperateStaminaHandler : IActionHandler<OperateStamina>
 {
@@ -15,7 +15,7 @@ public sealed class OperateStaminaHandler : IActionHandler<OperateStamina>
         IDomainEventCollector collector,
         CancellationToken cancellationToken = default)
     {
-        var targets = context.Targets.OfType<IUnitCommand>();
+        var targets = context.Targets.OfType<IUnit>();
         foreach (var target in targets)
         {
             var delta = (int)definition.Amount.Resolve(context);

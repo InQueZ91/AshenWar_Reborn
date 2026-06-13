@@ -1,26 +1,24 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Events;
-using Application.Interfaces;
-using Application.ValueObjects;
-using Domain.Entities.Actions;
-using Domain.Entities.Conditions;
-using Domain.Entities.Match;
-using Domain.Interfaces.Conditions;
-using Domain.Interfaces.Entities;
-using Domain.ValueObjects;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Application.ValueObjects;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Conditions;
+using AshenWar.Domain.Entities.Match;
+using AshenWar.Domain.Interfaces.Conditions;
+using AshenWar.Domain.Interfaces.Entities;
+using AshenWar.Domain.ValueObjects;
 
-namespace Application.Execution;
+namespace AshenWar.Application.Execution;
 
 public sealed class ConditionExecutor<TCondition>(TriggerChain triggerChain, ActionExecutor actionExecutor) 
     where TCondition : ConditionBase
 {
     public async Task Apply(
         TCondition condition,
-        IConditionCommand<TCondition> holder,
+        ICondition<TCondition> holder,
         MatchContext matchContext,
         IDomainEventCollector collector, // collector passed in, not created here
         CancellationToken ct)
@@ -42,7 +40,7 @@ public sealed class ConditionExecutor<TCondition>(TriggerChain triggerChain, Act
     }
     
     public async Task<ResolutionBatch> Tick(
-        IConditionCommand<TCondition> holder,
+        ICondition<TCondition> holder,
         MatchContext matchContext,
         CancellationToken ct)
     {
@@ -94,9 +92,13 @@ public sealed class ConditionExecutor<TCondition>(TriggerChain triggerChain, Act
         IDomainEventCollector collector,
         CancellationToken ct)
     {
+        if (source is null) // Holder is match not unit or tile
+            return;
+        
         foreach (var effect in effects)
         {
             ct.ThrowIfCancellationRequested();
+            
             var targets = (effect.Filter?.Apply(candidates, source) ?? candidates).ToImmutableList();
             var context = new ActionContext(source, targets, tags, matchContext);
 

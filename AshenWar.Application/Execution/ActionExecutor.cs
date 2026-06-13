@@ -4,12 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities;
-using Domain.Entities.Actions;
-using Domain.Interfaces.Actions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Interfaces.Actions;
 
-namespace Application.Execution;
+namespace AshenWar.Application.Execution;
 
 public sealed class ActionExecutor(ActionHandlerRegistry registry)
 {
@@ -34,16 +34,20 @@ public sealed class ActionExecutor(ActionHandlerRegistry registry)
         IDomainEventCollector collector,
         CancellationToken cancellationToken) where T : IActionDefinition
     {
-        await registry.Get<T>().Execute(action, context, collector, cancellationToken);
-        
+        var (handler, scope) = registry.Get<T>();
+        using (scope)
+        {
+            await handler.Execute(action, context, collector, cancellationToken);
+        }
+
         // Drain source
-        if (context.Source is MatchEntity sourceEntity)
-            foreach (var evt in sourceEntity.FlushDomainEvents())
+        if (context.Source is DomainEntity sourceEntity)
+            foreach (var evt in sourceEntity.DrainDomainEvents())
                 collector.Collect(evt);
-        
+
         // Drain targets
-        foreach (var target in context.Targets.OfType<MatchEntity>())
-            foreach (var evt in target.FlushDomainEvents())
-                collector.Collect(evt);
+        foreach (var target in context.Targets.OfType<DomainEntity>())
+        foreach (var evt in target.DrainDomainEvents())
+            collector.Collect(evt);
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Movement;
-using Domain.Interfaces.Entities;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Movement;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Application.Execution.Handlers.Movement;
+namespace AshenWar.Application.Execution.Handlers.Movement;
 
 public sealed class MoveHandler : IActionHandler<Move>
 {
@@ -15,7 +15,7 @@ public sealed class MoveHandler : IActionHandler<Move>
         IDomainEventCollector collector,
         CancellationToken cancellationToken)
     {
-        var targets = context.Targets.OfType<IUnitCommand>();
+        var targets = context.Targets.OfType<IUnit>();
         foreach (var target in targets)
         {
             target.MoveTo(definition.Destination);

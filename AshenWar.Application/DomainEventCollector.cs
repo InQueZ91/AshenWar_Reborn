@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using Application.Interfaces;
-using Domain.Interfaces;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Interfaces;
 
-namespace Application;
+namespace AshenWar.Application;
 
 public sealed class DomainEventCollector : IDomainEventCollector
 {

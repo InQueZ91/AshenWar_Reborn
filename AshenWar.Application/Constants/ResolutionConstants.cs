@@ -1,4 +1,4 @@
-﻿namespace Application.Constants;
+﻿namespace AshenWar.Application.Constants;
 
 public static class ResolutionConstants
 {

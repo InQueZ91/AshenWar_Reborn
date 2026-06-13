@@ -1,6 +1,6 @@
-﻿using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Players;
+﻿using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
 
-namespace Application.Events;
+namespace AshenWar.Application.Events;
 
-public sealed record MatchEnded(MatchId MatchId, UserId? WinnerId);
+public sealed record MatchEnded(MatchId MatchId, UserId WinnerId);

@@ -1,19 +1,19 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.ValueObjects;
-using Domain.Exceptions;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Auth;
+using AshenWar.Domain.Exceptions;
 using MediatR;
 
-namespace Application.Auth.Handler;
+namespace AshenWar.Application.Auth.Handler;
 
-public record LoginCommand(string Email, string Password) : IRequest<AuthResult>;
+public record LoginRequest(string Email, string Password) : IRequest<AuthResult>;
 
 public class LoginHandler(
     IUserRepository userRepository,
-    AuthService authService) : IRequestHandler<LoginCommand, AuthResult>
+    AuthService authService) : IRequestHandler<LoginRequest, AuthResult>
 {
-    public async Task<AuthResult> Handle(LoginCommand request, CancellationToken ct)
+    public async Task<AuthResult> Handle(LoginRequest request, CancellationToken ct)
     {
         var user = await userRepository.GetByEmailAsync(request.Email, ct);
 

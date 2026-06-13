@@ -1,5 +1,5 @@
-﻿using Domain.ValueObjects.Identifiers.Match;
+﻿using AshenWar.Domain.ValueObjects.Identifiers.Match;
 
-namespace Application.ValueObjects;
+namespace AshenWar.Application.ValueObjects;
 
-public sealed record PlanningExpired(TurnId TurnId, MatchId MatchId);
+public sealed record PlanningExpired(MatchId MatchId);

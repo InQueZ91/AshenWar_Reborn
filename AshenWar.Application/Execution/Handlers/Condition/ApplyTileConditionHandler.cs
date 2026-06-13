@@ -1,16 +1,17 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Condition;
-using Domain.Entities.Conditions.Tile;
-using Domain.Interfaces.Conditions;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Definitions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Domain.Entities.Conditions.Tile;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Application.Execution.Handlers.Condition;
+namespace AshenWar.Application.Execution.Handlers.Condition;
 
 public sealed class ApplyTileConditionHandler(
-    IConditionRepository conditionRepository,
+    IConditionDefinitionRepository conditionDefinitionRepository,
     ConditionExecutor<TileCondition> conditionExecutor)
     : IActionHandler<ApplyTileCondition>
 {
@@ -19,7 +20,7 @@ public sealed class ApplyTileConditionHandler(
         IDomainEventCollector collector,
         CancellationToken cancellationToken)
     {
-        var conditionDefinition = await conditionRepository.GetTileConditionAsync(definition.TileConditionDefinitionId,
+        var conditionDefinition = await conditionDefinitionRepository.GetTileConditionAsync(definition.TileConditionDefinitionId,
             cancellationToken);
         
         var stacksToApply = (int)definition.Stacks.Resolve(context);
@@ -29,7 +30,7 @@ public sealed class ApplyTileConditionHandler(
         
         foreach (var target in filteredTarget)
         {
-            if (target is not IConditionCommand<TileCondition> holder)
+            if (target is not ICondition<TileCondition> holder)
                 continue;
             
             var targetContext = context with { Targets = [target] };

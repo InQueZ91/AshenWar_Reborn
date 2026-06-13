@@ -3,22 +3,27 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using Application.Constants;
-using Application.Contracts;
-using Application.ValueObjects;
-using Domain.Entities.Match;
-using Domain.Enums.Conditions;
-using Domain.ValueObjects;
-using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Application.Constants;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Services;
+using AshenWar.Application.ValueObjects;
+using AshenWar.Domain.Entities.Match;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.ValueObjects;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Players;
+using AshenWar.Domain.ValueObjects.Orders;
+using Microsoft.Extensions.Logging;
 
-namespace Application.Planning;
+namespace AshenWar.Application.Planning;
 
 public sealed class PlanningService(
+    ChannelWriter<TimerMessage> writer,
     IMatchRepository matchRepository,
     ResolutionService resolutionService,
-    PlanningTimerService planningTimerService)
+    ILogger<PlanningService> logger)
 {
     private readonly ConcurrentDictionary<MatchId, SemaphoreSlim> _locks = new();
     
@@ -32,7 +37,7 @@ public sealed class PlanningService(
         await matchLock.WaitAsync(ct);
         try
         {
-            var match = await matchRepository.GetMatchAsync(matchId, ct);
+            var match = await matchRepository.FindAsync(matchId, ct);
             
             if (match is null)
                 return SubmitOrdersResult.Fail("Match not found.");
@@ -59,21 +64,16 @@ public sealed class PlanningService(
             // Validate unit orders
             foreach (var unitOrder in orders)
             {
-                var unit = match.GetUnitById(unitOrder.UnitId);
+                // Validate unit exists
+                var unit = match.Board.FindUnitById(unitOrder.UnitId);
                 if (unit is null)
                     return SubmitOrdersResult.Fail($"Unit {unitOrder.UnitId} not found.");
 
+                // Validate unit belongs to player
                 if (unit.Owner != userId)
                     return SubmitOrdersResult.Fail($"Unit {unitOrder.UnitId} does not belong to player {userId}.");
 
-                var ability = unit.GetActiveAbilityById(unitOrder.AbilityId);
-                if (ability is null)
-                    return SubmitOrdersResult.Fail($"Unit {unitOrder.UnitId} does not have ability {unitOrder.AbilityId}");
-
-                if (!ability.IsReady)
-                    return SubmitOrdersResult.Fail($"Ability {unitOrder.AbilityId} not ready.");
-                
-                // Validate conditions
+                // Validate unit conditions
                 var disableConditions = new[]
                 {
                     ConditionTag.Exhaust,
@@ -82,13 +82,26 @@ public sealed class PlanningService(
                 };
                 if (unit.HasAnyConditionWithTag(disableConditions))
                     return SubmitOrdersResult.Fail($"Unit {unitOrder.UnitId} is disabled.");
-
-                // Validate phase inputs
-                foreach (var phase in ability.Definition.Phases.Where(p => p.Shape?.RequiresInput ?? false))
+                
+                // Validate ability orders
+                foreach (var abilityOrder in unitOrder.AbilityOrders)
                 {
-                    var input = unitOrder.PhaseInputs.FirstOrDefault(i => i.AbilityPhaseId == phase.Id);
-                    if (input?.SelectedTarget is null)
-                        return SubmitOrdersResult.Fail($"Phase {phase.Id} requires input target.");
+                    // Validate ability exists
+                    var ability = unit.GetAbilityById(abilityOrder.AbilityId);
+                    if (ability is null)
+                        return SubmitOrdersResult.Fail($"Unit {unitOrder.UnitId} does not have ability {abilityOrder.AbilityId}");
+
+                    // Validate ability is ready
+                    if (!ability.IsReady)
+                        return SubmitOrdersResult.Fail($"Ability {abilityOrder.AbilityId} not ready.");
+
+                    // Validate ability step
+                    foreach (var step in ability.Definition.Steps.Where(p => p.Shape.RequiresInput))
+                    {
+                        var input = abilityOrder.Selections.FirstOrDefault(i => i.AbilityStepId == step.Id);
+                        if (input?.Target is null)
+                            return SubmitOrdersResult.Fail($"Phase {step.Id} requires input target.");
+                    }
                 }
             }
 
@@ -104,7 +117,8 @@ public sealed class PlanningService(
             // Fire and forget - client gets result via SignalR
             if (turn.BothSubmitted)
             {
-                planningTimerService.CancelTimer();
+                if (!writer.TryWrite(new CancelTimer(matchId)))
+                    logger.LogWarning("Failed to write timer message for match {MatchId}", matchId);
                 
                 _ = Task.Run(() => resolutionService.Resolve(
                         matchId,

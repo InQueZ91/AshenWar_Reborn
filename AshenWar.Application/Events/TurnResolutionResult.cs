@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Application.ValueObjects;
-using Application.ValueObjects.Roll;
-using Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Application.ValueObjects;
+using AshenWar.Application.ValueObjects.Roll;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
 
-namespace Application.Events;
+namespace AshenWar.Application.Events;
 
 public sealed record TurnResolutionResult(
     TurnId TurnId,

@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using Application.Enums;
-using Application.Interfaces;
-using Domain.ValueObjects.Identifiers.Abilities;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.ValueObjects.Identifiers.Abilities;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Application.Events;
+namespace AshenWar.Application.Events;
 
 public record AbilityFailed(
     UnitId UnitId,
-    ActiveAbilityDefinitionId AbilityDefinitionId,
+    AbilityDefinitionId AbilityDefinitionId,
     IReadOnlyList<AffordabilityFailure> Failures);

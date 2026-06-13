@@ -1,77 +1,107 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.Hubs;
-using Application.ValueObjects;
-using Domain.Entities.Match;
-using Domain.ValueObjects.Identifiers.Match;
-using Microsoft.AspNetCore.SignalR;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Notifications;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace Application.Planning;
+namespace AshenWar.Application.Planning;
 
 public sealed class PlanningTimerService(
-    IMatchRepository matchRepository,
-    IHubContext<GameHub> hubContext) : BackgroundService
+    ChannelReader<TimerMessage> reader,
+    IServiceScopeFactory scopeFactory,
+    IGameNotifier gameNotifier,
+    ILogger<PlanningTimerService> logger) : BackgroundService
 {
-    private CancellationTokenSource? _timerCts;
-    private MatchId? _activeMatchId;
+    private readonly ConcurrentDictionary<MatchId, CancellationTokenSource> _timers = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await RecoverOnStartup(stoppingToken);
+
+        await foreach (var message in reader.ReadAllAsync(stoppingToken))
+        {
+            switch (message)
+            {
+                case StartTimer msg:
+                    StartTimer(msg.MatchId, msg.StartedAt, msg.Duration, stoppingToken);
+                    break;
+                case CancelTimer msg:
+                    CancelTimer(msg.MatchId);
+                    break;
+            }
+        }
     }
 
-    public async Task StartPlanningTimer(MatchId matchId, Turn turn, CancellationToken stoppingToken)
+    private void StartTimer(MatchId matchId, DateTimeOffset startedAt, TimeSpan duration,
+        CancellationToken stoppingToken)
     {
-        _timerCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-        _activeMatchId = matchId;
-        
-        var remaining = turn.PlanningStartedAt + turn.PlanningDuration - DateTimeOffset.UtcNow;
-        if (remaining <= TimeSpan.Zero)
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+
+        if (!_timers.TryAdd(matchId, cts))
         {
-            await BroadcastExpired(matchId, turn);
+            cts.Dispose();
+            logger.LogWarning("Timer already running for match {MatchId}. Ignoring.", matchId);
             return;
         }
 
+        _ = RunTimerAsync(matchId, startedAt, duration, cts);
+    }
+
+    private void CancelTimer(MatchId matchId)
+    {
+        if (_timers.TryRemove(matchId, out var cts))
+        {
+            cts.Cancel();
+            cts.Dispose();
+        }
+    }
+
+    private async Task RunTimerAsync(MatchId matchId, DateTimeOffset startedAt, TimeSpan duration,
+        CancellationTokenSource cts)
+    {
         try
         {
-            await Task.Delay(remaining, _timerCts.Token);
-            await BroadcastExpired(matchId, turn);
+            var remaining = startedAt + duration - DateTimeOffset.UtcNow;
+            if (remaining > TimeSpan.Zero)
+                await Task.Delay(remaining, cts.Token);
+
+            if (!cts.IsCancellationRequested)
+                await gameNotifier.PlanningExpired(matchId, cts.Token);
         }
         catch (TaskCanceledException)
         {
             // Both players submitted early => clean exit
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Planning timer faulted for match {MatchId}", matchId);
+        }
         finally
         {
-            _timerCts = null;
-            _activeMatchId = null;
+            _timers.TryRemove(matchId, out _);
+            cts.Dispose();
         }
     }
     
-    public void CancelTimer()
-    {
-        _timerCts?.Cancel();
-    }
-
     private async Task RecoverOnStartup(CancellationToken stoppingToken)
     {
-        var match = await matchRepository.GetActivePlanningMatchAsync(stoppingToken);
-        if (match is null) return;
-
-        var turn = match.CurrentTurn;
-        if (turn.BothSubmitted)
-            return;
+        await using var scope = scopeFactory.CreateAsyncScope();
         
-        await StartPlanningTimer(match.Id, turn, stoppingToken);
-    }
-
-    private async Task BroadcastExpired(MatchId matchId, Turn turn)
-    {
-        await hubContext.Clients
-            .Group(matchId.Value.ToString())
-            .SendAsync("PlanningExpired", new PlanningExpired(turn.Id, matchId));
+        var matchRepository = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        
+        var matches = await matchRepository.GetActivePlanningMatchesAsync(stoppingToken);
+        
+        foreach (var match in (matches ?? []).Where(match => !match.CurrentTurn.BothSubmitted))
+        {
+            var turn = match.CurrentTurn;
+            StartTimer(match.Id, turn.PlanningStartedAt, turn.PlanningDuration, stoppingToken);
+        }
     }
 }

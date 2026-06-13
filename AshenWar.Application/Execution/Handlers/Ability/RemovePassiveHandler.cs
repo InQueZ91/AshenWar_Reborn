@@ -1,11 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Ability;
-using Domain.Interfaces.Abilities.Passive;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Ability;
+using AshenWar.Domain.Interfaces.Abilities;
 
-namespace Application.Execution.Handlers.Ability;
+namespace AshenWar.Application.Execution.Handlers.Ability;
 
 public sealed class RemovePassiveHandler : IActionHandler<RemovePassive>
 {
@@ -14,11 +14,11 @@ public sealed class RemovePassiveHandler : IActionHandler<RemovePassive>
         IDomainEventCollector collector,
         CancellationToken cancellationToken = default)
     {
-        if (context.Source is not IPassiveAbilityCommand holder)
+        if (context.Source is not IPassive holder)
             return Task.CompletedTask;
         
         // Fetch passive
-        var passive = holder.GetPassiveByDefinitionId(definition.PassiveAbilityDefinitionId);
+        var passive = holder.GetPassiveByDefinitionId(definition.PassiveDefinitionId);
         if (passive is null)
             return Task.CompletedTask;
         

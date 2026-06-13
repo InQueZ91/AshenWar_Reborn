@@ -1,22 +1,23 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Condition;
-using Domain.Entities.Conditions.Unit;
-using Domain.Interfaces.Conditions;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Definitions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Domain.Entities.Conditions.Unit;
+using AshenWar.Domain.Interfaces.Conditions;
 
-namespace Application.Execution.Handlers.Condition;
+namespace AshenWar.Application.Execution.Handlers.Condition;
 
 public sealed class ApplyUnitConditionHandler(
-    IConditionRepository conditionRepository,
+    IConditionDefinitionRepository conditionDefinitionRepository,
     ConditionExecutor<UnitCondition> conditionExecutor)
     : IActionHandler<ApplyUnitCondition>
 {
     public async Task Execute(ApplyUnitCondition definition, ActionContext context, IDomainEventCollector collector, CancellationToken cancellationToken)
     {
-        var conditionDefinition = await conditionRepository.GetUnitConditionAsync(definition.UnitConditionDefinitionId,
+        var conditionDefinition = await conditionDefinitionRepository.GetUnitConditionAsync(definition.UnitConditionDefinitionId,
             cancellationToken);
         
         var stacksToApply = (int)definition.Stacks.Resolve(context);
@@ -26,7 +27,7 @@ public sealed class ApplyUnitConditionHandler(
         
         foreach (var target in filteredTarget)
         {
-            if (target is not IConditionCommand<UnitCondition> holder)
+            if (target is not ICondition<UnitCondition> holder)
                 continue;
             
             var targetContext = context with { Targets = [target] };

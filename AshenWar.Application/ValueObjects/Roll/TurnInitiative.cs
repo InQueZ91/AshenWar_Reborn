@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Domain.ValueObjects.Identifiers.Match;
-using Domain.ValueObjects.Identifiers.Units;
+using AshenWar.Domain.ValueObjects.Identifiers.Match;
+using AshenWar.Domain.ValueObjects.Identifiers.Units;
 
-namespace Application.ValueObjects.Roll;
+namespace AshenWar.Application.ValueObjects.Roll;
 
 public sealed record TurnInitiative(TurnId TurnId, int Seed, IReadOnlyList<InitiativeRound> Rounds, IReadOnlyList<UnitId> FinalOrder);

@@ -1,15 +1,16 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Contracts;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Condition;
-using Domain.Entities.Conditions.Global;
+using AshenWar.Application.Contracts;
+using AshenWar.Application.Contracts.Definitions;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Condition;
+using AshenWar.Domain.Entities.Conditions.Global;
 
-namespace Application.Execution.Handlers.Condition;
+namespace AshenWar.Application.Execution.Handlers.Condition;
 
 public sealed class ApplyGlobalConditionHandler(
-    IConditionRepository conditionRepository,
+    IConditionDefinitionRepository conditionDefinitionRepository,
     ConditionExecutor<GlobalCondition> conditionExecutor)
     : IActionHandler<ApplyGlobalCondition>
 {
@@ -18,7 +19,7 @@ public sealed class ApplyGlobalConditionHandler(
         IDomainEventCollector collector,
         CancellationToken cancellationToken)
     {
-        var conditionDefinition = await conditionRepository.GetGlobalConditionAsync(
+        var conditionDefinition = await conditionDefinitionRepository.GetGlobalConditionAsync(
             definition.GlobalConditionDefinitionId,
             cancellationToken);
         

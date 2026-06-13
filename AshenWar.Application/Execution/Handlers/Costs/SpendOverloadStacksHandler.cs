@@ -1,13 +1,13 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using Application.Interfaces;
-using Domain.Entities.Actions;
-using Domain.Entities.Actions.Definitions.Costs;
-using Domain.Enums.Conditions;
-using Domain.Events;
-using Domain.Interfaces.Entities;
+using AshenWar.Application.Contracts.Execution;
+using AshenWar.Domain.Entities.Actions;
+using AshenWar.Domain.Entities.Actions.Definitions.Costs;
+using AshenWar.Domain.Enums.Conditions;
+using AshenWar.Domain.Events;
+using AshenWar.Domain.Interfaces.Entities;
 
-namespace Application.Execution.Handlers.Costs;
+namespace AshenWar.Application.Execution.Handlers.Costs;
 
 public sealed class SpendOverloadStacksHandler : IActionHandler<SpendOverloadStacks>
 {
@@ -16,7 +16,7 @@ public sealed class SpendOverloadStacksHandler : IActionHandler<SpendOverloadSta
         IDomainEventCollector collector,
         CancellationToken cancellationToken)
     {
-        if (context.Source is not IUnitCommand unit) 
+        if (context.Source is not IUnit unit) 
             return Task.CompletedTask;
 
         var overloadCondition = unit.GetConditionWithTag(ConditionTag.Overload);
