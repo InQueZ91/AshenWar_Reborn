@@ -1,0 +1,322 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>AshenWar Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="./css/demo.css">
+</head>
+<body>
+
+<p class="page-title">Ashen War</p>
+
+<div class="layout">
+
+    <!-- ── Left ── -->
+    <div class="left">
+
+        <!-- Connection Panel -->
+        <div class="card">
+            <div class="status-bar">
+                <div class="dot" id="dot"></div>
+                <span class="status-txt" id="statusText">Disconnected</span>
+            </div>
+            <div class="card-body">
+                <div id="loginSection">
+                    <div class="field">
+                        <label for="authEmail">Email</label>
+                        <input id="authEmail" type="email" placeholder="user@example.com"/>
+                    </div>
+                    <div class="field">
+                        <label for="authPassword">Password</label>
+                        <input id="authPassword" type="password" placeholder="password">
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="rememberMe">Remember me
+                    </div>
+                    <span class="status-span" id="loginStatus">—</span>
+                    <div class="btn-row">
+                        <button class="btn" id="btnLogin" onClick="loginAndConnect()">Login</button>
+                        <button class="btn" id="btnRegister">Register</button>
+                    </div>
+                </div>
+                <div id="connectedSection" class="hidden">
+                    <table class="kv-table">
+                        <tr>
+                            <td>Phase</td>
+                            <td><span class="phase-badge" id="csPhase">—</span></td>
+                        </tr>
+                        <tr>
+                            <td>Username</td>
+                            <td id="csUsername">—</td>
+                        </tr>
+                        <tr>
+                            <td>Side</td>
+                            <td id="csSide">—</td>
+                        </tr>
+                        <tr>
+                            <td>Lobby</td>
+                            <td id="csLobby">—</td>
+                        </tr>
+                        <tr>
+                            <td>Match</td>
+                            <td id="csMatch">—</td>
+                        </tr>
+                    </table>
+                    <button class="btn" id="btnLogout" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lobby Panel -->
+        <div class="card" id="lobbyCard">
+            <div class="card-header">Lobby</div>
+            <div class="card-body">
+                <span class="status-span" id="queueStatus">—</span>
+                <div class="btn-row">
+                    <button class="btn ghost" id="btnJoinQueue" onclick="joinQueue()" disabled>Join</button>
+                    <button class="btn danger" id="btnLeaveQueue" onclick="leaveQueue()" disabled>Leave</button>
+                </div>
+                <div class="divider"></div>
+                <div class="deploy-zone">
+                    <div class="list-header">
+                        <span class="list-header-span">Deployment Plans</span>
+                    </div>
+                    <div class="power-bar-wrap">
+                        <div class="power-bar-labels">
+                            <span>Power</span>
+                            <span id="powerBarText">0 / —</span>
+                        </div>
+                        <div class="power-bar-track">
+                            <div class="power-bar-fill" id="powerBarFill"></div>
+                        </div>
+                    </div>
+                    <div class="deploy-cols">
+                        <span>Unit</span>
+                        <span>Position</span>
+                        <span></span>
+                    </div>
+                    <div class="item-list" id="deploy-list"></div>
+                    <button class="btn ghost" id="btnAddDeploymentPlan" onclick="addDeploymentPlan()">+ Add</button>
+                    <span class="status-span" id="deployStatus">—</span>
+                    <div class="btn-row">
+                        <button class="btn" id="btnSubmitDeployment" onclick="submitDeployment()" disabled>
+                            Submit
+                        </button>
+                        <button class="btn danger" id="btnCancelDeployment" onclick="cancelDeployment()" disabled>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Panel -->
+        <div class="card hidden" id="orderCard">
+            <button class="timer-btn" id="timerBtn" onclick="submitOrders()" disabled>
+                <div class="timer-btn-inner">
+                    <div class="timer-top">
+                        <span class="timer-label">Planning</span>
+                        <span class="timer-display" id="timerDisplay">—</span>
+                    </div>
+                    <div class="timer-bar-wrap">
+                        <div class="timer-bar" id="timerBar"></div>
+                    </div>
+                    <span class="timer-action" id="timerAction">Set orders to submit</span>
+                </div>
+            </button>
+            <div class="card-header">Your Units</div>
+            <div class="card-body">
+                <div class="unit-list" id="unitList"></div>
+            </div>
+        </div>
+        
+    </div> <!-- /left -->
+
+    <!-- ── Right ── -->
+    <div class="right">
+        
+        <!-- Map Panel -->
+        <div class="card" id="mapCard">
+            <div class="card-header">
+                <span>Battlefield</span>
+                <span class="map-phase-label" id="mapPhaseLabel">—</span>
+            </div>
+            <div class="map-canvas-wrap">
+                <canvas id="hexCanvas"></canvas>
+            </div>
+            <div class="map-footer">
+                <div class="map-target-mode hidden" id="mapTargetMode">
+                    Click a spawn tile to place your unit
+                </div>
+                <span class="map-hint" id="mapHint">Waiting for match...</span>
+            </div>
+        </div>
+
+        <!-- Unit Detail Panel -->
+        <div class="card hidden" id="unitDetailCard">
+            
+            <!-- TAB BAR -->
+            <div class="tab-bar">
+                <button class="tab active" id="tabAbilities" onclick="switchTab('abilities')">Abilities</button>
+                <button class="tab" id="tabInfo" onclick="switchTab('info')">Info</button>
+            </div>
+
+            <!-- Abilities Tab -->
+            <div class="tab-content" id="tabContentAbilities">
+                <div class="ability-grid" id="abilityGrid"></div>
+                <div class="confirm-row">
+                    <button class="confirm-btn" id="confirm-btn" onclick="confirmAction()">
+                        <span class="icon">✓</span>
+                        Add to queue
+                    </button>
+                </div>
+                <div class="bars-section">
+                    
+                    <!-- HP -->
+                    <div class="seg-wrap">
+                        <span class="seg-label" id="health-seg-label">Health</span>
+                        <div class="seg-track" id="health-track">
+                            <div class="bar-fill hp" id="health-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stamina + Steps -->
+                    <div class="seg-row">
+
+                        <div class="seg-wrap">
+                            <span class="seg-label" id="stamina-seg-label">Stamina</span>
+                            <div class="seg-track" id="stamina-track">
+                                <div class="bar-fill sta" id="stamina-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="seg-wrap">
+                            <span class="seg-label" id="steps-seg-label">Steps</span>
+                            <div class="seg-track" id="steps-track">
+                                <div class="bar-fill steps" id="steps-fill"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Info Tab -->
+            <div class="tab-content hidden" id="tabContentInfo">
+                <div class="info-panel">
+                    
+                    <!-- FINAL STATS -->
+                    <div class="info-section">
+                        <div class="section-title">Final Stats</div>
+                        <div class="stat-grid">
+                            <div class="stat-row">
+                                <span class="stat-key">Power</span>
+                                <span class="stat-val" id="info-pow">14</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-key">Health</span>
+                                <span class="stat-val" id="info-hp">8</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-key">Speed</span>
+                                <span class="stat-val" id="info-spd">7</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-key">Stamina</span>
+                                <span class="stat-val" id="info-sta">2</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-key">Vision</span>
+                                <span class="stat-val" id="info-vis">12</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-key">Steps</span>
+                                <span class="stat-val" id="info-ste">15</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PASSIVES -->
+                    <div class="info-section">
+                        <div class="section-title">Passives</div>
+                        <div class="passive-list" id="passiveList">
+                            <div class="passive-row">
+                                <span class="passive-name">Tough Skin</span>
+                                <span class="passive-desc">Reduce incoming physical damage by 1.</span>
+                            </div>
+                            <div class="passive-row">
+                                <span class="passive-name">Swift</span>
+                                <span class="passive-desc">+2 speed when moving on open terrain.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONDITIONS -->
+                    <div class="info-section">
+                        <div class="section-title">Conditions</div>
+                        <div class="condition-list" id="conditionList">
+                            <div class="condition-row buff">
+                                <div class="condition-left">
+                                    <span class="condition-name">Empowered x 1</span>
+                                    <span class="condition-effect">+2 Attack this turn</span>
+                                </div>
+                                <span class="condition-turns">2 turns</span>
+                            </div>
+                            <div class="condition-row debuff">
+                                <div class="condition-left">
+                                    <span class="condition-name">Poisoned</span>
+                                    <span class="condition-effect">-2 HP at start of turn</span>
+                                </div>
+                                <span class="condition-turns">1 turn</span>
+                            </div>
+                            <div class="condition-row debuff">
+                                <div class="condition-left">
+                                    <span class="condition-name">Slowed</span>
+                                    <span class="condition-effect">-1 Speed</span>
+                                </div>
+                                <span class="condition-turns">3 turns</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <!-- Log Panel -->
+        <div class="log-panel">
+            <div class="log-header">
+                <div class="log-header-left">
+                    <span>Event log</span>
+                    <span class="log-count" id="logCount">0</span>
+                    <button class="btn small ghost" id="btnDemoMap" onclick="toggleDebugDeploy()">DemoDeploy</button>
+                    <button class="btn small ghost" id="btnDemoPlan" onclick="toggleDebugPlan()">DemoPlan</button>
+                    <button class="btn small ghost" id="btnDemoOrder" onclick="toggleDebugOrder()">DemoOrder</button>
+                </div>
+                <button class="btn small ghost" onclick="clearLog()">Clear</button>
+            </div>
+
+            <div class="log-body" id="log"></div>
+
+            <div class="log-footer">
+                <label class="log-autoscroll-label">
+                    <input type="checkbox" id="autoScroll" checked> auto-scroll
+                </label>
+            </div>
+        </div>
+
+    </div> <!-- /right -->
+
+</div>
+
+<script src="./js/hex.js"></script>
+<script src="./js/main.js"></script>
+<script src="./js/hub.js"></script>
+<script src="./js/debug.js"></script>
+
+</body>
+</html>

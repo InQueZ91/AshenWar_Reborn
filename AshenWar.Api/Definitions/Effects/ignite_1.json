@@ -1,0 +1,14 @@
+﻿{
+  "id" : "a1b2c3d4-0001-0001-0003-000000000001",
+  "name" : "ignite_1",
+  "actions" : [
+    {
+      "type" : "ApplyUnitCondition",
+      "unitConditionDefinitionId" : "22c34325-1ed1-45b7-bb0c-f6a5cbea98e2",
+      "stacks": {
+        "type": "Fixed",
+        "value": 1
+      }
+    }
+  ]
+}

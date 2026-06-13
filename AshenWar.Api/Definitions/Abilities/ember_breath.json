@@ -1,0 +1,43 @@
+﻿{
+  "id": "a1b2c3d4-0002-0003-0001-000000000001",
+  "name": "Ember Breath",
+  "stats": {
+    "damage": 15,
+    "cooldown": 4,
+    "range": 3
+  },
+  "costs": [
+    {
+      "type": "Stamina",
+      "amount": 3
+    }
+  ],
+  "steps": [
+    {
+      "shape": {
+        "type": "Circle",
+        "radius": 2
+      },
+      "filter": {
+        "type": "AllOf",
+        "filters": [
+          { "type": "EnemiesOnly" },
+          { "type": "UnitsOnly" }
+        ]
+      },
+      "actions": [
+        {
+          "type": "DealDamage",
+          "amount": {
+            "type": "Fixed",
+            "value": 10
+          }
+        }
+      ],
+      "effects": [
+        "a1b2c3d4-0001-0001-0003-000000000001"
+      ]
+    }
+  ],
+  "tags": ["Aoe", "Fire", "Ranged"]
+}

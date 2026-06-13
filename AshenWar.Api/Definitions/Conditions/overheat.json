@@ -1,0 +1,25 @@
+﻿{
+  "type": "UnitCondition",
+  "id": "aa8cb16a-569b-44bc-a32b-2fa0685ebe86",
+  "name": "Overheat",
+  "baseDuration": 1,
+  "maxStacks": 100,
+  "stackingBehavior": { "type": "StackAndRefresh"},
+  "tags": ["Overload"],
+  "modifiers": [
+    {
+      "statName": "IncomingDamage",
+      "operation": { "type": "Add" },
+      "stackScaling": { "type": "Additive" },
+      "baseValue": 0,
+      "perStackValue": 1
+    },
+    {
+      "statName": "Damage",
+      "operation": { "type": "Add" },
+      "stackScaling": { "type": "Additive" },
+      "baseValue": 0,
+      "perStackValue": 1
+    }
+  ]
+}
