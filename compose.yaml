@@ -1,0 +1,26 @@
+﻿name: ashenwar
+
+services:
+  postgres:
+    image: postgres:16.0-alpine
+    container_name: ashenwar-postgres
+    environment:
+      POSTGRES_USER: ashenwar_user
+      POSTGRES_PASSWORD: ashenwar_password
+      POSTGRES_DB: ashenwar
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    
+  mongodb:
+    image: mongo:7
+    container_name: ashenwar-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    
+volumes:
+  postgres-data:
+  mongo-data:
