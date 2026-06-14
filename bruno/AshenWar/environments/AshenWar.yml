@@ -1,0 +1,4 @@
+name: AshenWar
+variables:
+  - name: baseUrl
+    value: http://localhost:5128

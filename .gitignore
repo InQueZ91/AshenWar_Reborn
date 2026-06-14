@@ -3,7 +3,8 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
-
+/.vs/
+/.idea/
 # Default ignored files
 /shelf/
 /workspace.xml
@@ -19,11 +20,9 @@ riderModule.iml
 /dataSources.local.xml
 # Editor-based HTTP Client requests
 /httpRequests/
-
 # IDE
 .vs/
 .idea/
 *.user
-
 # Claude Code
 .claude/

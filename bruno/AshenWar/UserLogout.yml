@@ -1,0 +1,23 @@
+info:
+  name: UserLogout
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/api/auth/logout"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: '{ "refreshToken": "..." }'
+  auth:
+    type: bearer
+    token: eyJhbGci...
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

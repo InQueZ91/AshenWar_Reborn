@@ -1,0 +1,32 @@
+﻿{
+  "type": "UnitCondition",
+  "id": "22c34325-1ed1-45b7-bb0c-f6a5cbea98e2",
+  "name": "Burn",
+  "baseDuration": 3,
+  "maxStacks": 5,
+  "stackingBehavior": { "type": "StackAndRefresh" },
+  "tags": ["Fire"],
+  "modifiers": [
+    {
+      "statName": "IncomingDamage",
+      "operation": { "type": "Add" },
+      "stackScaling": { "type": "Additive" },
+      "baseValue": 0,
+      "perStackValue": 2,
+      "tagFilter": ["Fire"]
+    }
+  ],
+  "onTick": [
+    {
+      "actions": [
+        {
+          "type": "DealDamage",
+          "amount": {
+            "type": "Fixed",
+            "value": 5
+          }
+        }
+      ]
+    }
+  ]
+}

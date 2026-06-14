@@ -1,0 +1,27 @@
+﻿{
+  "id": "59e3fc36-1f3d-4795-a468-531709667334",
+  "name": "Fire Dragon Rage",
+  "passiveTriggers": [
+    {
+      "shape": { "type": "Self" },
+      "tags": [ "Overload" ],
+      "triggers": [
+        {
+          "type": "OnUnitDamaged",
+          "subjectFilter": { "type": "Self" }
+        }
+      ],
+      "actions": [
+        {
+          "type": "ApplyUnitCondition",
+          "unitConditionDefinitionId": "aa8cb16a-569b-44bc-a32b-2fa0685ebe86",
+          "stacks": {
+            "type": "Fixed",
+            "value": 1
+          }
+        }
+      ],
+      "effects": []
+    }
+  ]
+}

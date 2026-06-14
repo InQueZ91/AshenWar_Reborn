@@ -1,0 +1,41 @@
+﻿{
+  "id": "a1b2c3d4-0002-0002-0001-000000000001",
+  "name": "Frenzy Strike",
+  "stats": {
+    "damage": 12,
+    "cooldown": 3,
+    "range": 2
+  },
+  "costs": [
+    {
+      "type": "Stamina",
+      "amount": 2
+    }
+  ],
+  "steps": [
+    {
+      "shape": {
+        "type": "Cone",
+        "range": 2
+      },
+      "filter": {
+        "type": "AllOf",
+        "filters": [
+          { "type": "EnemiesOnly" },
+          { "type": "UnitsOnly" }
+        ]
+      },
+      "actions": [
+        {
+          "type" : "DealDamage",
+          "amount" : {
+            "type": "FromAbilityStat",
+            "stat": "Damage",
+            "abilityDefinitionId": "a1b2c3d4-0002-0002-0001-000000000001"
+          }
+        }
+      ]
+    }
+  ],
+  "tags": ["Melee", "Overload", "Frenzy"]
+}

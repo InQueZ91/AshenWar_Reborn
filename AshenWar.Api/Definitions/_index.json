@@ -1,0 +1,21 @@
+﻿{
+  "units": {
+    "ember_tail_dragonlings": "00000000-0000-0000-0001-000000000002",
+    "knight": "00000000-0000-0000-0001-000000000001"
+  },
+  "abilities": {
+    "ember_breath": "a1b2c3d4-0002-0003-0001-000000000001",
+    "frenzy_strike": "a1b2c3d4-0002-0002-0001-000000000001",
+    "shield_bash": "a1b2c3d4-0002-0001-0001-000000000001"
+  },
+  "passives": {
+    "fire_dragon_rage": "59e3fc36-1f3d-4795-a468-531709667334"
+  },
+  "conditions": {
+    "burn" : "22c34325-1ed1-45b7-bb0c-f6a5cbea98e2",
+    "overheat" : "aa8cb16a-569b-44bc-a32b-2fa0685ebe86"
+  },
+  "effects": {
+    "ignite_1": "a1b2c3d4-0001-0001-0003-000000000001"
+  }
+}
